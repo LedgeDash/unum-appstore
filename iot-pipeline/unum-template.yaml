@@ -1,0 +1,15 @@
+Globals:
+  ApplicationName: unum-iot
+  UnumIntermediaryDataStoreType: s3
+  UnumIntermediaryDataStoreName: unum-return-value-store
+  Checkpoint: false
+
+Functions:
+  Aggregator:
+    Properties:
+      CodeUri: aggregator/
+      Runtime: python3.8
+  HvacController:
+    Properties:
+      CodeUri: hvac_controller/
+      Runtime: python3.8

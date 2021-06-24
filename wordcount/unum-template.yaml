@@ -1,0 +1,27 @@
+Globals:
+  ApplicationName: unum-mapreduce-wordcount
+  UnumIntermediaryDataStoreType: s3
+  UnumIntermediaryDataStoreName: unum-return-value-store
+  Checkpoint: false
+
+Functions:
+  Mapper:
+    Properties:
+      CodeUri: mapper/
+      Runtime: python3.8
+  Reducer:
+    Properties:
+      CodeUri: reducer/
+      Runtime: python3.8
+  Partition:
+    Properties:
+      CodeUri: partition/
+      Runtime: python3.8
+  UnumMap:
+    Properties:
+      CodeUri: unum_map/
+      Runtime: python3.8
+  Summary:
+    Properties:
+      CodeUri: summary/
+      Runtime: python3.8
