@@ -1,0 +1,27 @@
+Globals:
+  ApplicationName: unum-excamera
+  UnumIntermediaryDataStoreType: s3
+  UnumIntermediaryDataStoreName: unum-return-value-store
+  Checkpoint: false
+
+Functions:
+  UnumMapVpxenc:
+    Properties:
+      CodeUri: unum_map_vpxenc/
+      Runtime: python3.8
+  Vpxenc:
+    Properties:
+      CodeUri: vpxenc/
+      Runtime: python3.8
+  Xcdec:
+    Properties:
+      CodeUri: xcdec/
+      Runtime: python3.8
+  Reencode:
+    Properties:
+      CodeUri: reencode/
+      Runtime: python3.8
+  Rebase:
+    Properties:
+      CodeUri: rebase/
+      Runtime: python3.8

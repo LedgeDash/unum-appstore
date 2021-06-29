@@ -1,23 +1,3 @@
-# Compatible Triggers:
-# This version expects the raw input in the `event` input parameter.
-# Therefore, it can only be invoked via HTTP requests (synchronous or
-# asynchronous). This means the compatible triggers are:
-# 1. boto3 sync
-# 2. boto3 async
-# 3. aws lambda invoke
-#
-# Incompatible triggers include
-# 1. S3 events
-# 2. SNS messages
-# 3. Destination
-#
-# Next Function Invocation Method: This version returns a Python dict which
-# the Lambda runtime will serialize into a JSON string. Therefore, the only
-# way for this function to invoke the next function (i.e., hvac_controller) is
-# through Lambda Destination. Specifically, a deployed instance of this
-# function needs to have a DestinationConfig that redirects its outputs to an
-# deployed instance of the hvac_controller function.
-
 import json
 from datetime import datetime
 from functools import reduce 

@@ -1,0 +1,10 @@
+{
+    "Next": "Reencode", 
+    "WaitFor": [
+        {
+            "Prefix": "unum-excamera-VpxencFunction",
+            "Index": "$MyIndex+1"
+        }
+    ],
+    "NextInput": "Fan-in"
+}

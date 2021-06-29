@@ -1,0 +1,5 @@
+Rebase: arn:aws:lambda:us-west-1:746167823857:function:unum-excamera-RebaseFunction-B6solBt3Epbh
+Reencode: arn:aws:lambda:us-west-1:746167823857:function:unum-excamera-ReencodeFunction-IwfxFohkXURH
+UnumMapVpxenc: arn:aws:lambda:us-west-1:746167823857:function:unum-excamera-UnumMapVpxencFunction-olM7cGfmW6BJ
+Vpxenc: arn:aws:lambda:us-west-1:746167823857:function:unum-excamera-VpxencFunction-ezGsP6Yvx3ue
+Xcdec: arn:aws:lambda:us-west-1:746167823857:function:unum-excamera-XcdecFunction-ONeP6w5hWYRC
