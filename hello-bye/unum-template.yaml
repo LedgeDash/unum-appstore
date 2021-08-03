@@ -1,0 +1,23 @@
+Globals:
+  ApplicationName: unum-hello-world-chain
+  UnumIntermediaryDataStoreType: s3
+  UnumIntermediaryDataStoreName: unum-return-value-store
+  Checkpoint: false
+
+Functions:
+  Hello:
+    Properties:
+      CodeUri: hello/
+      Runtime: python3.8
+  World:
+    Properties:
+      CodeUri: world/
+      Runtime: python3.8
+  Bye:
+    Properties:
+      CodeUri: bye/
+      Runtime: python3.8
+  Start:
+    Properties:
+      CodeUri: start/
+      Runtime: python3.8

@@ -1,0 +1,13 @@
+{
+	"Next": [
+		{
+			"Name": "Hello",
+			"Conditional": "$ret == 'hello'"
+		},
+		{
+			"Name": "Bye",
+			"Conditional": "$ret == 'bye'"
+		}
+	],
+	"NextInput": "Scalar"
+}
