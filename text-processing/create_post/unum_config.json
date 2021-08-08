@@ -1,0 +1,11 @@
+{
+	"Name": "CreatePost",
+	"Next": {
+		"Name": "Publish"
+	},
+	"NextInput": "Scalar",
+	"Checkpoint": true,
+	"Fan-out Modifiers": [
+		"Pop"
+	]
+}

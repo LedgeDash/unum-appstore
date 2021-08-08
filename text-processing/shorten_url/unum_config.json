@@ -1,0 +1,15 @@
+{
+	"Name": "ShortenUrl",
+	"Next": {
+		"Name": "CreatePost"
+	},
+	"NextInput": {
+		"Fan-in": {
+			"Values": [
+				"UserMention-unumIndex-0",
+				"ShortenUrl-unumIndex-1"
+			]
+		}
+	},
+	"Checkpoint": true
+}

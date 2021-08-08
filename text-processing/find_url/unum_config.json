@@ -1,0 +1,8 @@
+{
+	"Name": "FindUrl",
+	"Next":	{
+		"Name": "ShortenUrl"
+	},
+	"NextInput": "Scalar",
+	"Checkpoint": true
+}

@@ -1,0 +1,31 @@
+Globals:
+  ApplicationName: unum-text-processing
+  UnumIntermediaryDataStoreType: s3
+  UnumIntermediaryDataStoreName: unum-return-value-store
+  Checkpoint: true
+
+Functions:
+  Start:
+    Properties:
+      CodeUri: start/
+      Runtime: python3.8
+  CreatePost:
+    Properties:
+      CodeUri: create_post/
+      Runtime: python3.8
+  FindUrl:
+    Properties:
+      CodeUri: find_url/
+      Runtime: python3.8
+  Publish:
+    Properties:
+      CodeUri: publish/
+      Runtime: python3.8
+  ShortenUrl:
+    Properties:
+      CodeUri: shorten_url/
+      Runtime: python3.8
+  UserMention:
+    Properties:
+      CodeUri: user_mention/
+      Runtime: python3.8
