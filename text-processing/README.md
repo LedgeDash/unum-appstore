@@ -22,4 +22,4 @@ Once both `UserMention` and `ShortenUrl` completes, `CreatePost` is invoked with
 
 ```
 
-The `Publish` function saves the JSON document in a database created by the programmer.
+The `Publish` function saves the JSON document in a Dynamodb database created by the programmer. The database's name is specified in the `dbconfig.yaml` file.

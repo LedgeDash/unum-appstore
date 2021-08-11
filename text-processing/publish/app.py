@@ -18,7 +18,7 @@ def lambda_handler(event, context):
     user_names=[{"S": n} for n in event['user_names']]
     urls = [{"L": [{"S": e[0]}, {"S": e[1]}]} for e in event['urls']]
 
-    dynamodb_client.put_item(TableName=db_name,
+    post_db.put_item(TableName=db_name,
             Item={
                 'postid': {'S': f'{uuid.uuid4()}'},
                 'user_names': {"L": user_names},
