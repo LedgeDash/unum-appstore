@@ -1,1 +1,7 @@
-{}
+{
+	"Name": "World",
+	"Fan-out Modifiers" : [
+		"Pop"
+	],
+	"Checkpoint": true
+}

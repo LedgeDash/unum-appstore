@@ -1,8 +1,8 @@
 Globals:
-  ApplicationName: unum-iot
+  ApplicationName: unum-iot-chain
   UnumIntermediaryDataStoreType: s3
   UnumIntermediaryDataStoreName: unum-return-value-store
-  Checkpoint: false
+  Checkpoint: true
 
 Functions:
   Aggregator:

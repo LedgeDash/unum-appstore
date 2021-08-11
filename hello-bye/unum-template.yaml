@@ -1,8 +1,8 @@
 Globals:
-  ApplicationName: unum-hello-world-chain
+  ApplicationName: unum-hello-bye-world-branch
   UnumIntermediaryDataStoreType: s3
   UnumIntermediaryDataStoreName: unum-return-value-store
-  Checkpoint: false
+  Checkpoint: true
 
 Functions:
   Hello:

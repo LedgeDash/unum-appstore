@@ -1,1 +1,9 @@
-{"Next": "HvacController", "NextInput": "Scalar"}
+{
+	"Name": "Aggregator",
+	"Next": {
+		"Name": "HvacController"
+	},
+	"NextInput": "Scalar",
+	"Start": true,
+	"Checkpoint": true
+}

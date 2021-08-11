@@ -13,23 +13,92 @@ class ReturnValueStoreDriver(object):
         self.backend = None
 
 class S3Driver(ReturnValueStoreDriver):
-    def __init__(self, ds_type, ds_name):
-        super(S3Driver, self).__init__(ds_type, ds_name)
+    def __init__(self, ds_name):
+        ''' Initialze an s3 data store
+
+        Raise an exception if the bucket doesn't exist.
+
+        @ param ds_name an s3 bucket name
+        '''
+        super(S3Driver, self).__init__("s3", ds_name)
         self.backend = boto3.client("s3")
+        # check if this bucket exists and this function has permission to
+        # access it
+        response = self.backend.head_bucket(Bucket=self.name)
+
 
     def create_session(self):
         ''' Create a prefix (directory) in the bucket
         '''
-        pass
+        return f'{uuid.uuid4()}'
 
     def create_fanin_context(self):
         ''' For the fan-out functions to write their outputs, creates a s3
         directory
+        DEPRECATED
         '''
         directoryName = f'{uuid.uuid4()}'
         self.backend.put_object(Bucket=self.name, Key=(directoryName+'/'))
 
         return directoryName
+
+    def read_input(self, session, ptr):
+        ''' Given the pointer(s) in event["Data"]["Value"], read the value(s)
+        from data store.
+
+        The pointers are used as is. It is the invoker's the responsibility to
+        make sure that the pointers are valid.
+
+        If any of the pointers don't exist in the bucket, this function will
+        keep retrying.
+
+        '''
+        s3_names = [f'{session}/{p}-output.json' for p in ptr]
+
+        data = []
+
+        for s3_name, p in zip(s3_names, ptr):
+            local_file_name = f'{ptr}-output.json'
+            self.backend.download_file(self.name, s3_name, f'/tmp/{local_file_name}')
+
+            with open(f'/tmp/{local_file_name}', 'r') as f:
+                data.append(json.loads(f.read()))
+
+        return data
+
+    def check_value_exist(self, session, name):
+        pass
+    def check_values_exist(self, session, names):
+
+        s3_names = [f'{session}/{n}-output.json' for n in names]
+
+        response = self.backend.list_objects_v2(
+                        Bucket=self.name,
+                        Prefix=f'{session}/' # e.g., reducer0/
+                    )
+        all_keys = [e["Key"] for e in response["Contents"]]
+
+        for n in s3_names:
+            if n not in all_keys:
+                return False
+
+        return True
+
+    def write_return_value(self, session, ret_name, ret):
+        ''' Write a user function's return value to the s3 bucket
+
+        @param session a s3 prefix that is the session context
+        @param ret_name the s3 file name
+        @param ret the user function's return value
+        '''
+        fn = f'{ret_name}.json'
+        local_file_path = '/tmp/'+fn
+        with open(local_file_path, 'w') as f:
+            f.write(json.dumps(ret))
+
+        self.backend.upload_file(local_file_path,
+                                 self.name,
+                                 f'{session}/{fn}')
 
     def write_fanin_context(self, output, fcn_name, context, index, size):
         ''' Fan-out function writes its outputs to the fan-in s3 directory
@@ -39,6 +108,7 @@ class S3Driver(ReturnValueStoreDriver):
             @param context s3 directory name (without the /)
             @param index function's index in the fan-out
             @param size fan-out size
+            DEPRECATED
         '''
         fn = f"{fcn_name}-UINDEX-{index}-outof-{size}.json"
         local_file_path = '/tmp/'+fn
@@ -114,8 +184,8 @@ class S3Driver(ReturnValueStoreDriver):
         return ret
 
 class DynamoDBDriver(ReturnValueStoreDriver):
-    def __init__(self, ds_type, ds_name):
-        super(DynamoDBDriver, self).__init__(ds_type, ds_name)
+    def __init__(self, ds_name):
+        super(DynamoDBDriver, self).__init__("dynamodb", ds_name)
         self.backend = boto3.client("dynamodb")
 
     def create_session(self):

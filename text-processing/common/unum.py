@@ -61,7 +61,7 @@ def validate_input(event):
                 uerror(f'Entry function failed to create session context')
                 return False
 
-    if event["Data"]["Source"] != "http" and event["Data"]["Source"] != my_return_value_store.type:
+    if event["Data"]["Source"] != "http" and event["Data"]["Source"] != my_return_value_store.my_type:
         uerror(f'Input data need to sent via HTTP or the intermediary data store: {event["Data"]["Source"]}')
         return False
 
@@ -93,7 +93,7 @@ def ingress(event, context):
     if data["Source"] =="http":
         return data["Value"]
     else:
-        return my_return_value_store.read_input(data["Value"])
+        return my_return_value_store.read_input(event["Session"], data["Value"])
 
 
 def get_unumindex_str(fof):
@@ -218,6 +218,7 @@ def evaluate_conditional(cont, event, user_function_output):
     
     return eval(cond)
 
+
 def expand_return_value_name(name, event):
     expanded_name= name
 
@@ -232,18 +233,19 @@ def expand_return_value_name(name, event):
     return expanded_name
 
 
-
 def expand_fanin_values(vl, event):
 
-    expanded_names = [item for sublist in tmp for item in sublist]
+    # expanded_names = [item for sublist in tmp for item in sublist]
+    expanded_names = []
 
     tmp = [expand_return_value_name(n, event) for n in vl]
     for e in tmp:
         if isinstance(e, list):
             expanded_names = expanded_names+e
         else:
-            expanded_names = expanded_names.append(e)
-    
+            # expanded_names = expanded_names.append(e)
+            expanded_names.append(e)
+
     return expanded_names
 
 

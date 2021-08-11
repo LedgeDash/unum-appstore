@@ -6,8 +6,6 @@ import uuid
 import os, sys
 import time, datetime
 
-with open('unum_config.json', 'r') as f:
-    config = json.loads(f.read())
 
 # Connect to the intermediary data store
 # If failed to connect, the function will raise an exception.
@@ -18,10 +16,14 @@ elif os.environ['UNUM_INTERMEDIARY_DATASTORE_TYPE'] == "dynamodb":
 else:
     raise IOError(f'unknown return value store type')
 
+
+with open('unum_config.json', 'r') as f:
+    config = json.loads(f.read())
+
 if "Next" in config:
     lambda_client = boto3.client("lambda")
 
-my_function_name = os.environ['AWS_LAMBDA_FUNCTION_NAME']
+my_function_name = config["Name"]
 
 
 def http_invoke_async(function, data):
@@ -59,7 +61,7 @@ def validate_input(event):
                 uerror(f'Entry function failed to create session context')
                 return False
 
-    if event["Data"]["Source"] != "http" and event["Data"]["Source"] != my_return_value_store.type:
+    if event["Data"]["Source"] != "http" and event["Data"]["Source"] != my_return_value_store.my_type:
         uerror(f'Input data need to sent via HTTP or the intermediary data store: {event["Data"]["Source"]}')
         return False
 
@@ -91,7 +93,7 @@ def ingress(event, context):
     if data["Source"] =="http":
         return data["Value"]
     else:
-        return my_return_value_store.read_input(data["Value"])
+        return my_return_value_store.read_input(event["Session"], data["Value"])
 
 
 def get_unumindex_str(fof):
@@ -103,9 +105,9 @@ def get_unumindex_str(fof):
 def get_my_return_value_name(fof):
     if fof != {} and fof != None:
         idx = get_unumindex_str(fof)
-        return my_function_name+"-unumIndex-"+idx
+        return my_function_name+"-unumIndex-"+idx+"-output"
     else:
-        return my_function_name
+        return my_function_name+"-output"
 
 
 def _run_fanout_modifier(modifier, fof):
@@ -133,7 +135,7 @@ def _run_fanout_modifier(modifier, fof):
     if "$size" in modifier:
         exec_modifier = exec_modifier.replace("$size", 'fof["Size"]')
 
-    if "$0" in modifer:
+    if "$0" in modifier:
         exec_modifier = exec_modifier.replace("$0", 'fof["Index"]')
 
 
@@ -141,11 +143,21 @@ def _run_fanout_modifier(modifier, fof):
     return fof
 
 
-def run_fanout_modifiers(modifiers, fof):
+def run_fanout_modifiers(event):
     '''
     @param modifiers [str] a list of modifiers
-    @param fof dict Fan-out field on the input
+    @param event dict input event
     '''
+    if "Fan-out" not in event:
+        return {}
+
+    fof = event["Fan-out"]
+
+    if "Fan-out Modifiers" not in config:
+        return fof
+
+    modifiers = config["Fan-out Modifiers"]
+
     for m in modifiers:
         fof = _run_fanout_modifier(m, fof)
 
@@ -191,11 +203,51 @@ def evaluate_conditional(cont, event, user_function_output):
         cond = cond.replace("$size", str(event["Fan-out"]["Outerloop"]["Index"]))
 
     if "$ret" in cond:
-        #TODO: might need a more complex conversion than simply calling
-        #`str()`
-        cond = cond.replace("$ret", str(user_function_output))
+        # TODO: Depending on the return value types that we want to support,
+        # we might need a more complex conversion than simply calling `str()`.
+        # See the Step Functions Choice state for the types and comparison
+        # operators that they support.
+
+        if isinstance(user_function_output,str):
+            cond = cond.replace("$ret", f"'{user_function_output}'")
+        else:
+            uerror(f'Unsupported user function return value type for Conditional')
+            return False
+
+    # raise IOError(f'{cond}, {type(cond)}; {cont["Conditional"]}')
     
     return eval(cond)
+
+
+def expand_return_value_name(name, event):
+    expanded_name= name
+
+    if "$0" in expanded_name:
+        expanded_name = name.replace("$0", str(event["Fan-out"]["Index"]))
+    if "$1" in expanded_name:
+        expanded_name = name.replace("$1", str(event["Fan-out"]["Outerloop"]["Index"]))
+    if "*" in expanded_name:
+        tmp = expanded_name
+        expanded_name = [tmp.replace("*",i) for i in range(event["Fan-out"]["Size"])]
+
+    return expanded_name
+
+
+def expand_fanin_values(vl, event):
+
+    # expanded_names = [item for sublist in tmp for item in sublist]
+    expanded_names = []
+
+    tmp = [expand_return_value_name(n, event) for n in vl]
+    for e in tmp:
+        if isinstance(e, list):
+            expanded_names = expanded_names+e
+        else:
+            # expanded_names = expanded_names.append(e)
+            expanded_names.append(e)
+
+    return expanded_names
+
 
 def egress(user_function_output, event, context):
 
@@ -232,13 +284,14 @@ def egress(user_function_output, event, context):
 
     # Execute Fan-out Modifiers
     # The Size and Index fields might be changed
-    modifiers = config["Fan-out Modifiers"]
-    new_fof = run_fanout_modifiers(modifiers, event["Fan-out"])
-    # event["Fan-out"] = new_fof
+    # if "Fan-out" in event:
+    #     next_fof = run_fanout_modifiers(event)
 
     # If there's a next function to invoke, invoke it. Otherwise simply return
     if "Next" not in config:
         return
+
+    # raise IOError(f'{config["Next"]}, {type(config["Next"])}')
 
     if config["NextInput"] == "Scalar":
         if isinstance(config["Next"], dict):
@@ -254,12 +307,13 @@ def egress(user_function_output, event, context):
                 }
             }
 
-            payload["Session"] = event["Session"]
+            payload["Session"] = session_context
 
             # Inherit and propagate the fan-out metadata
             if "Fan-out" in event:
                 # payload["Fan-out"] = event["Fan-out"]
-                payload["Fan-out"] = new_fof
+                next_fof = run_fanout_modifiers(event)
+                payload["Fan-out"] = next_fof
 
             http_invoke_async(cont["Name"], payload)
 
@@ -279,14 +333,15 @@ def egress(user_function_output, event, context):
                 payload["Session"] = session_context
 
                 payload["Fan-out"] = {
-                    "Type": "Parallel"
+                    "Type": "Parallel",
                     "Index": idx,
                     "Size": len(config["Next"])
                 }
                 # Embed the outer loop metadata under ["Fan-out"]["OuterLoop"]
                 if "Fan-out" in event:
                     # payload["Fan-out"]["OuterLoop"] = event["Fan-out"]
-                    payload["Fan-out"]["OuterLoop"] = new_fof
+                    next_fof = run_fanout_modifiers(event)
+                    payload["Fan-out"]["OuterLoop"] = next_fof
 
                 http_invoke_async(cont["Name"], payload)
 
@@ -322,7 +377,8 @@ def egress(user_function_output, event, context):
                 # Embed the outer loop metadata under ["Fan-out"]["OuterLoop"]
                 if "Fan-out" in event:
                     # payload["Fan-out"]["OuterLoop"] = event["Fan-out"]
-                    payload["Fan-out"]["OuterLoop"] = new_fof
+                    next_fof = run_fanout_modifiers(event)
+                    payload["Fan-out"]["OuterLoop"] = next_fof
 
                 http_invoke_async(cont["Name"], payload)
 
@@ -332,85 +388,60 @@ def egress(user_function_output, event, context):
         else:
             raise IOError(f'Next field has to be a function name or a list of function names')
 
-    elif config["NextInput"] == "Fan-in":
+    elif isinstance(config["NextInput"], dict) and "Fan-in" in config["NextInput"]:
         if isinstance(config["Next"], dict):
-            # write my output to the ReturnValueStore
-            if ("UnumMetadata" not in event) or ("ReturnValueStore" not in event["UnumMetadata"]):
-                raise IOError(f'Fan-in node missing UnumMetadata and ReturnValueStore in event: {event}')
+            # Functions whose `NextInput` is "Fan-in" should always has its
+            # "Checkpoint" field being true. Therefore, my output should have
+            # already been written to the intermediary data store.
 
-            my_return_value_store.write_fanin_context(user_function_output,
-                my_function_name,
-                event["UnumMetadata"]["ReturnValueStore"]["Context"],
-                event["UnumMetadata"]["Index"],
-                event["UnumMetadata"]["FanoutSize"])
+            # We can use the `Conditional` combined with the `Wait` field to
+            # control which function performs the fan-in.
+            cont = config["Next"]
+            if evaluate_conditional(cont, event, user_function_output) == False:
+                return
 
-            # check if the WaitFor functions have completed by checking
-            # whether their outputs exist in the ReturnValueStore
-            if config["WaitFor"] == "Map":
-                if event["UnumMetadata"]["Index"]+1 == event["UnumMetadata"]["FanoutSize"]:
-                    # NOTE: only the last fan-out function waits
-                    keys = []
-                    while len(keys) < event["UnumMetadata"]["FanoutSize"]:
-                        keys = my_return_value_store.list_fanin_context(event["UnumMetadata"]["ReturnValueStore"]["Context"])
+            # Get the list of all names that this function needs to wait for
+            # by expanding config["NextInput"]["Fan-in"]["Values"]
+            expanded_names = expand_fanin_values(config["NextInput"]["Fan-in"]["Values"], event)
 
-                        if len(keys) == event["UnumMetadata"]["FanoutSize"]:
-                            break
-                        elif len(keys) > event["UnumMetadata"]["FanoutSize"]:
-                            raise IOError(f'More fan-out function return values than fan-out size')
-
-                        time.sleep(0.1)
-
-                # Invoke the next function if WaitFor functions have completed.
-                # Otherwise simply return
-                    payload = {
-                        "Data": {
-                            "Source": my_return_value_store.my_type,
-                            "Value": {
-                                "Name": my_return_value_store.name,
-                                "Context": event["UnumMetadata"]["ReturnValueStore"]["Context"]
-                            }
-                        },
-                        "UnumMetadata": {
-                            "Index": event["UnumMetadata"]["Index"],
-                            "FanoutSize": event["UnumMetadata"]["FanoutSize"]
-                        }
-                    }
-
-                    http_invoke_async(config["Next"], payload)
-            else:
-                # Wait for specific outputs
-                waitfor = get_waiter_list(config["WaitFor"], event)
-                output_list = []
-
-                for w in waitfor:
-                    counter = 0
-                    exist, fn = check_prefix_index_exist(event["UnumMetadata"]["ReturnValueStore"]["Context"], w["Prefix"], w["Index"])
-                    while exist == False:
-                        time.sleep(1)
-                        counter = counter+1
-                        if counter >= 20:
-                            break
-                        exist, fn = check_prefix_index_exist(event["UnumMetadata"]["ReturnValueStore"]["Context"], w["Prefix"], w["Index"])
-                    if fn != None:
-                        output_list.append(fn)
-
-                # Invoke the next function if WaitFor functions have completed.
+            # Check for existence of values
+            if my_return_value_store.check_values_exist(session_context, expanded_names):
                 payload = {
                     "Data": {
                         "Source": my_return_value_store.my_type,
-                        "Value": {
-                            "Name": my_return_value_store.name,
-                            "Context": event["UnumMetadata"]["ReturnValueStore"]["Context"],
-                            "Keys": output_list
-                        }
+                        "Value": expanded_names
                     },
-                    "UnumMetadata": {
-                        "Index": event["UnumMetadata"]["Index"],
-                        "FanoutSize": event["UnumMetadata"]["FanoutSize"]
-                    }
+                    "Session": session_context,
                 }
 
-                http_invoke_async(config["Next"], payload)
+                if "Fan-out" in event:
+                    next_fof = run_fanout_modifiers(event)
+                    payload["Fan-out"] = next_fof
+
+                http_invoke_async(cont["Name"], payload)
+
+            else:
+                if "Wait" in config["NextInput"]["Fan-in"] and config["NextInput"]["Fan-in"]["Wait"]:
+                    while True:
+                        if my_return_value_store.check_values_exist(session_context, expanded_names):
+                            payload = {
+                                "Data": {
+                                    "Source": my_return_value_store.my_type,
+                                    "Value": expanded_names
+                                },
+                                "Session": session_context,
+                            }
+
+                            if "Fan-out" in event:
+                                next_fof = run_fanout_modifiers(event)
+                                payload["Fan-out"] = next_fof
+
+                            http_invoke_async(cont["Name"], payload)
+
+                        time.sleep(1)
+                else:
+                    return
+
 
         elif isinstance(config["Next"], list):
             # TODO

@@ -1,4 +1,17 @@
 import json
+import random
+import string
+
+HOSTNAME="http://sh.ort"
+
+def get_random_string(length):
+    return ''.join(random.choice(string.ascii_lowercase) for i in range(length))
 
 def lambda_handler(event, context):
-    return [("https://thenationalpulse.com/news/abcs-trump-in-trouble-poll-surveyed-just-533-not-likely-voters-asked-over-20-more-biden-supporters-than-conservatives", "https://short-url.st")]
+    urls = event
+    ret = []
+
+    for u in urls:
+        ret.append((u, f'{HOSTNAME}/{get_random_string(5)}'))
+
+    return ret

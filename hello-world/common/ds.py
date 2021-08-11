@@ -24,13 +24,13 @@ class S3Driver(ReturnValueStoreDriver):
         self.backend = boto3.client("s3")
         # check if this bucket exists and this function has permission to
         # access it
-        response = client.head_bucket(Bucket=self.name)
+        response = self.backend.head_bucket(Bucket=self.name)
 
 
     def create_session(self):
         ''' Create a prefix (directory) in the bucket
         '''
-        return f'{uuid.uuid4()}/'
+        return f'{uuid.uuid4()}'
 
     def create_fanin_context(self):
         ''' For the fan-out functions to write their outputs, creates a s3
@@ -42,7 +42,7 @@ class S3Driver(ReturnValueStoreDriver):
 
         return directoryName
 
-    def read_input(ptr):
+    def read_input(self, session, ptr):
         ''' Given the pointer(s) in event["Data"]["Value"], read the value(s)
         from data store.
 
@@ -51,11 +51,40 @@ class S3Driver(ReturnValueStoreDriver):
 
         If any of the pointers don't exist in the bucket, this function will
         keep retrying.
-        '''
-        
-        pass
 
-    def write_return_value(session, ret_name, ret):
+        '''
+        s3_names = [f'{session}/{p}-output.json' for p in ptr]
+
+        data = []
+
+        for s3_name, p in zip(s3_names, ptr):
+            local_file_name = f'{ptr}-output.json'
+            self.backend.download_file(self.name, s3_name, f'/tmp/{local_file_name}')
+
+            with open(f'/tmp/{local_file_name}', 'r') as f:
+                data.append(json.loads(f.read()))
+
+        return data
+
+    def check_value_exist(self, session, name):
+        pass
+    def check_values_exist(self, session, names):
+
+        s3_names = [f'{session}/{n}-output.json' for n in names]
+
+        response = self.backend.list_objects_v2(
+                        Bucket=self.name,
+                        Prefix=f'{session}/' # e.g., reducer0/
+                    )
+        all_keys = [e["Key"] for e in response["Contents"]]
+
+        for n in s3_names:
+            if n not in all_keys:
+                return False
+
+        return True
+
+    def write_return_value(self, session, ret_name, ret):
         ''' Write a user function's return value to the s3 bucket
 
         @param session a s3 prefix that is the session context

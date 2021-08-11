@@ -1,4 +1,5 @@
 {
+	"Name": "Start",
 	"Next": [
 		{
 			"Name": "Hello",
@@ -9,5 +10,7 @@
 			"Conditional": "$ret == 'bye'"
 		}
 	],
-	"NextInput": "Scalar"
+	"NextInput": "Scalar",
+	"Checkpoint": true,
+	"Start": true
 }
