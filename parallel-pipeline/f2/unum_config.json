@@ -1,1 +1,8 @@
-{"Next": "F3", "NextInput": "Scalar"}
+{
+	"Name": "F2",
+	"Next": {
+		"Name": "F3"
+	},
+	"NextInput": "Scalar",
+	"Checkpoint": true
+}

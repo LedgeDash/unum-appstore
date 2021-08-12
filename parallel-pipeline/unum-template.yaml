@@ -1,8 +1,8 @@
 Globals:
-  ApplicationName: unum-map
+  ApplicationName: unum-parallel-pipeline
   UnumIntermediaryDataStoreType: s3
   UnumIntermediaryDataStoreName: unum-return-value-store
-  Checkpoint: false
+  Checkpoint: true
 
 Functions:
   F1:

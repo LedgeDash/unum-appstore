@@ -4,11 +4,19 @@
 
 ### hello-world
 
-Chaining
+Simple chaining. No fan-out metadata propagation.
+
+Creation of session by `Start` function.
+
+`NextInput: Scalar` 
 
 ### iot-pipeline
 
-Chaining
+Simple chaining. No fan-out metadata propagation.
+
+Creation of session by `Start` function.
+
+`NextInput: Scalar` 
 
 ### hello-bye
 
