@@ -2,6 +2,33 @@
 
 ## Test cases
 
+### hello-world
+
+Chaining
+
+### iot-pipeline
+
+Chaining
+
+### hello-bye
+
+`Start`' config:
+
+Branching based on user function return value.
+
+```json
+"Next": [
+		{
+			"Name": "Hello",
+			"Conditional": "$ret == 'hello'"
+		},
+		{
+			"Name": "Bye",
+			"Conditional": "$ret == 'bye'"
+		}
+	],
+```
+
 ### text-processing
 
 Parallel pipelines of different length
@@ -35,3 +62,13 @@ Invoking fan-in function with the correct input
 `F1`'s config:
 
 `F1-unumIndex-*`. Fan-in on `*`. Expanding `*`.
+
+Any one of the `F1` instances can invoke `Summary`. Multiple instances of `Summary` might run, *each with a different unum index and therefore outputing return values into the intermediary data store with different id*. For instance, with s3, we might see `Summary-unumIndex-0-output.json` and `Summary-unumIndex-1-output.json`.
+
+### map-wait
+
+`F1`'s config:
+
+`Conditional: $0 == $size - 1`.
+
+`Wait = true` 
