@@ -1,1 +1,9 @@
-{"Next": "Mapper", "NextInput": "Map"}
+{
+	"Name": "UnumMap",
+	"Next": {
+		"Name": "Mapper"
+	},
+	"NextInput": "Map",
+	"Checkpoint": true,
+	"Start": true
+}

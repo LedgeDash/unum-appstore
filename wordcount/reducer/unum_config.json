@@ -1,1 +1,14 @@
-{"Next": "Summary", "WaitFor": "Map", "NextInput": "Fan-in"}
+{
+	"Name": "Reducer",
+	"Next": {
+		"Name": "Summary",
+		"Conditional": "$0 == $size - 1"
+	},
+	"NextInput": {
+		"Fan-in": {
+			"Values": ["Reducer-unumIndex-*"],
+			"Wait": true
+		}
+	},
+	"Checkpoint": true
+}

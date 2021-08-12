@@ -79,4 +79,21 @@ Any one of the `F1` instances can invoke `Summary`. Multiple instances of `Summa
 
 `Conditional: $0 == $size - 1`.
 
-`Wait = true` 
+`Wait = true`
+
+### parallel-pipeline
+
+F3
+
+only the last one performs the fan-in `Conditional: $0 == $size - 1`
+
+Propagation of fan-out metadata within chains in a map fan-out.
+
+
+### wordcount
+
+Chain of map fan-outs.
+
+`Partition` function has a `Fan-out Modifiers: ["Pop"]` and therefore should not embed the `Fan-out` field from its input to its output.
+
+`Partition` function's return value can be named `Partition-unumIndex-5` but the `Reducer` function's return value cannot be `Reducer-unumIndex-5.0`. It should simply be `Reducer-unumIndex-0`.

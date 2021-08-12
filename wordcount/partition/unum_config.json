@@ -1,1 +1,8 @@
-{"Next": "Reducer", "NextInput": "Map"}
+{
+	"Name": "Partition",
+	"Next": {
+		"Name": "Reducer"
+	},
+	"NextInput": "Map",
+	"Checkpoint": true
+}

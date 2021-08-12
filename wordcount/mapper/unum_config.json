@@ -1,1 +1,14 @@
-{"Next": "Partition", "WaitFor": "Map", "NextInput": "Fan-in"}
+{
+	"Name": "Mapper",
+	"Next": {
+		"Name": "Partition",
+		"Conditional": "$0 == $size - 1"
+	},
+	"NextInput": {
+		"Fan-in": {
+			"Values": ["Mapper-unumIndex-*"],
+			"Wait": true
+		}
+	},
+	"Checkpoint": true
+}
