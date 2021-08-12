@@ -4,5 +4,6 @@
 		"Name": "Reducer"
 	},
 	"NextInput": "Map",
+	"Fan-out Modifiers": ["Pop"],
 	"Checkpoint": true
 }
