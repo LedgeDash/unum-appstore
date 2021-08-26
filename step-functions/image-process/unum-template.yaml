@@ -1,0 +1,19 @@
+Globals:
+  ApplicationName: unum-map
+  UnumIntermediaryDataStoreType: s3
+  UnumIntermediaryDataStoreName: unum-return-value-store
+  Checkpoint: true
+
+Functions:
+  FaceDetection:
+    Properties:
+      CodeUri: face_detection/
+      Runtime: Image
+  Thumbnail:
+    Properties:
+      CodeUri: thumbnail/
+      Runtime: Image
+  Publish:
+    Properties:
+      CodeUri: publish/
+      Runtime: python3.8

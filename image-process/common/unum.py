@@ -5,7 +5,9 @@ import boto3
 import uuid
 import os, sys
 import time, datetime
-
+import random
+import string
+import re
 
 # Connect to the intermediary data store
 # If failed to connect, the function will raise an exception.
@@ -25,6 +27,12 @@ if "Next" in config:
 
 my_function_name = config["Name"]
 
+config["Debug"] = True
+
+
+def get_random_string(length):
+    return ''.join(random.choice(string.ascii_lowercase) for i in range(length))
+
 
 def http_invoke_async(function, data):
     '''
@@ -41,10 +49,13 @@ def http_invoke_async(function, data):
 
     return
 
-def uerror(msg):
+def uerror(session, name, msg):
     ''' Write error message to datastore/session_context/errors/
     '''
-    return
+    if config["Debug"]:
+        my_return_value_store.write_error(session, name, msg)
+
+
 def validate_input(event):
 
     if "Data" not in event:
@@ -97,17 +108,17 @@ def ingress(event, context):
 
 
 def get_unumindex_str(fof):
-    if "Outerloop" not in fof:
+    if "OuterLoop" not in fof:
         return str(fof["Index"])
 
-    return get_unumindex_str(fof["Outerloop"])+"."+str(fof["Index"])
+    return get_unumindex_str(fof["OuterLoop"])+"."+str(fof["Index"])
 
 def get_my_return_value_name(fof):
     if fof != {} and fof != None:
         idx = get_unumindex_str(fof)
-        return my_function_name+"-unumIndex-"+idx+"-output"
+        return my_function_name+"-unumIndex-"+idx
     else:
-        return my_function_name+"-output"
+        return my_function_name
 
 
 def _run_fanout_modifier(modifier, fof):
@@ -122,11 +133,11 @@ def _run_fanout_modifier(modifier, fof):
     if fof == {}:
         return {}
     if modifier == None:
-        return
+        return fof
 
     if modifier == "Pop":
-        if "Outerloop" in fof:
-            return fof["Outerloop"]
+        if "OuterLoop" in fof:
+            return fof["OuterLoop"]
         else:
             return {}
     
@@ -200,7 +211,7 @@ def evaluate_conditional(cont, event, user_function_output):
     if "$0" in cond:
         cond = cond.replace("$0", str(event["Fan-out"]["Index"]))
     if "$1" in cond:
-        cond = cond.replace("$1", str(event["Fan-out"]["Outerloop"]["Index"]))
+        cond = cond.replace("$1", str(event["Fan-out"]["OuterLoop"]["Index"]))
 
     if "$ret" in cond:
         # TODO: Depending on the return value types that we want to support,
@@ -225,7 +236,12 @@ def expand_return_value_name(name, event):
     if "$0" in expanded_name:
         expanded_name = name.replace("$0", str(event["Fan-out"]["Index"]))
     if "$1" in expanded_name:
-        expanded_name = name.replace("$1", str(event["Fan-out"]["Outerloop"]["Index"]))
+        expanded_name = name.replace("$1", str(event["Fan-out"]["OuterLoop"]["Index"]))
+    if "(" in expanded_name and ")" in expanded_name:
+        exp_np = re.findall('\((.*?)\)', expanded_name)
+        exp_wp = re.findall('\(.*?\)', expanded_name)
+        for i in range(0,len(exp_np)):
+            expanded_name = expanded_name.replace(exp_wp[i], str(eval(exp_np[i])))
     if "*" in expanded_name:
         tmp = expanded_name
         expanded_name = [tmp.replace("*",str(i)) for i in range(event["Fan-out"]["Size"])]
@@ -315,6 +331,11 @@ def egress(user_function_output, event, context):
                 next_fof = run_fanout_modifiers(event)
                 payload["Fan-out"] = next_fof
 
+            if "Fan-out" in payload:
+                uerror(payload["Session"], f'{config["Name"]}-{payload["Fan-out"]["Index"]}-nextpayload-chain.json', payload)
+            else:
+                uerror(payload["Session"], f'{config["Name"]}-nextpayload-chain.json', payload)
+
             http_invoke_async(cont["Name"], payload)
 
         elif isinstance(config["Next"], list):
@@ -341,7 +362,10 @@ def egress(user_function_output, event, context):
                 if "Fan-out" in event:
                     # payload["Fan-out"]["OuterLoop"] = event["Fan-out"]
                     next_fof = run_fanout_modifiers(event)
-                    payload["Fan-out"]["OuterLoop"] = next_fof
+                    if next_fof != {}:
+                        payload["Fan-out"]["OuterLoop"] = next_fof
+
+                uerror(payload["Session"], f'{config["Name"]}-{payload["Fan-out"]["Index"]}-nextpayload-parallel.json', payload)
 
                 http_invoke_async(cont["Name"], payload)
 
@@ -378,7 +402,10 @@ def egress(user_function_output, event, context):
                 if "Fan-out" in event:
                     # payload["Fan-out"]["OuterLoop"] = event["Fan-out"]
                     next_fof = run_fanout_modifiers(event)
-                    payload["Fan-out"]["OuterLoop"] = next_fof
+                    if next_fof != {}:
+                        payload["Fan-out"]["OuterLoop"] = next_fof
+
+                uerror(payload["Session"], f'{config["Name"]}-{payload["Fan-out"]["Index"]}-nextpayload.json', payload)
 
                 http_invoke_async(cont["Name"], payload)
 
@@ -404,6 +431,8 @@ def egress(user_function_output, event, context):
             # by expanding config["NextInput"]["Fan-in"]["Values"]
             expanded_names = expand_fanin_values(config["NextInput"]["Fan-in"]["Values"], event)
 
+            uerror(event["Session"], f'{config["Name"]}-{get_random_string(5)}-fanin-expandednames.json', payload)
+
             # Check for existence of values
             if my_return_value_store.check_values_exist(session_context, expanded_names):
                 payload = {
@@ -416,7 +445,13 @@ def egress(user_function_output, event, context):
 
                 if "Fan-out" in event:
                     next_fof = run_fanout_modifiers(event)
-                    payload["Fan-out"] = next_fof
+                    if next_fof != {}:
+                        payload["Fan-out"] = next_fof
+
+                if "Fan-out" in payload:
+                    uerror(payload["Session"], f'{config["Name"]}-{payload["Fan-out"]["Index"]}-nextpayload-fanin.json', payload)
+                else:
+                    uerror(payload["Session"], f'{config["Name"]}-nextpayload-fanin.json', payload)
 
                 http_invoke_async(cont["Name"], payload)
 
@@ -452,7 +487,13 @@ def egress(user_function_output, event, context):
 
                         if "Fan-out" in event:
                             next_fof = run_fanout_modifiers(event)
-                            payload["Fan-out"] = next_fof
+                            if next_fof != {}:
+                                payload["Fan-out"] = next_fof
+
+                        if "Fan-out" in payload:
+                            uerror(payload["Session"], f'{config["Name"]}-{payload["Fan-out"]["Index"]}-nextpayload-fanin.json', payload)
+                        else:
+                            uerror(payload["Session"], f'{config["Name"]}-nextpayload-fanin.json', payload)
 
                         http_invoke_async(cont["Name"], payload)
                 else:
@@ -492,6 +533,9 @@ def lambda_handler(event, context):
         return {
             "Error": "Invalid unum input"
         }
+
+    if "Session" in event:
+        uerror(event["Session"], f'{config["Name"]}-{get_random_string(5)}-input.json', event)
 
     user_function_input = ingress(event, context)
     

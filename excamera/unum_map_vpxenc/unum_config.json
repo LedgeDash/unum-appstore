@@ -1,1 +1,9 @@
-{"Next": "Vpxenc", "NextInput": "Map"}
+{
+	"Name": "UnumMapVpxenc",
+	"Next": {
+		"Name": "Vpxenc"
+	},
+	"NextInput": "Map",
+	"Checkpoint": true,
+	"Start": true
+}

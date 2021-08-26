@@ -1,10 +1,19 @@
 {
-    "Next": "Reencode", 
-    "WaitFor": [
-        {
-            "Prefix": "unum-excamera-VpxencFunction",
-            "Index": "$MyIndex+1"
+    "Name": "Xcdec",
+    "Next": {
+        "Name": "Reencode"
+    },
+    "NextInput": {
+        "Fan-in": {
+            "Values": [
+                "Xcdec-unumIndex-$0",
+                "Vpxenc-unumIndex-($0+1)"
+            ],
+            "Wait": true
         }
+    },
+    "Fan-out Modifiers": [
+        "$0 = $0 + 1"
     ],
-    "NextInput": "Fan-in"
+    "Checkpoint": true
 }

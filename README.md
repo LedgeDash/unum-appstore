@@ -97,3 +97,41 @@ Chain of map fan-outs.
 `Partition` function has a `Fan-out Modifiers: ["Pop"]` and therefore should not embed the `Fan-out` field from its input to its output.
 
 `Partition` function's return value can be named `Partition-unumIndex-5` but the `Reducer` function's return value cannot be `Reducer-unumIndex-5.0`. It should simply be `Reducer-unumIndex-0`.
+
+### excamera
+
+`Vpxenc`'s config
+
+`Conditional: $0 <$size -1`. The last `Vpxenc` does not invoke its continuation (which is `Xcdec`)
+
+`Xcdec`'s config
+
+`Fan-out Modifiers: [$0 = $0+1]`, increments the Fan-out Index so that the invoked `Reencode` function's input is `event["Fan-out"]["Index"]` is 1 greater than the invoker `Xcdec`'s `event["Fan-out"]["Index"]`.
+
+```
+"NextInput": {
+        "Fan-in": {
+            "Values": [
+                "Xcdec-unumIndex-$0",
+                "Vpxenc-unumIndex-($0+1)"
+            ]
+        }
+}
+```
+
+`($0+1)` expressions when expanding value names.
+
+
+
+`Reencode`'s config
+
+`Conditional: $0 == 1` only the first `Reencode` function invokes the `Rebase` function.
+
+`Fan-in: Values: [Reencode-unumIndex-$0, Reencode-unumIndex-($0+1)]`
+
+
+
+
+
+
+

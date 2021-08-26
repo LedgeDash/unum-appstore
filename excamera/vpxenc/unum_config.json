@@ -1,1 +1,9 @@
-{"Next": "Xcdec", "NextInput": "Scalar"}
+{
+	"Name": "Vpxenc",
+	"Next":	{
+		"Name": "Xcdec",
+		"Conditional": "$0 < $size - 1"
+	},
+	"NextInput": "Scalar",
+	"Checkpoint": true
+}

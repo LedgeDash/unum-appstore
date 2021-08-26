@@ -2,7 +2,7 @@ Globals:
   ApplicationName: unum-excamera
   UnumIntermediaryDataStoreType: s3
   UnumIntermediaryDataStoreName: unum-return-value-store
-  Checkpoint: false
+  Checkpoint: true
 
 Functions:
   UnumMapVpxenc:
