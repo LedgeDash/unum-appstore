@@ -52,7 +52,7 @@ def http_invoke_async(function, data):
 def uerror(session, name, msg):
     ''' Write error message to datastore/session_context/errors/
     '''
-    if config["Debug"]:
+    if "Debug" in config and config["Debug"] == True:
         my_return_value_store.write_error(session, name, msg)
 
 
@@ -431,7 +431,7 @@ def egress(user_function_output, event, context):
             # by expanding config["NextInput"]["Fan-in"]["Values"]
             expanded_names = expand_fanin_values(config["NextInput"]["Fan-in"]["Values"], event)
 
-            uerror(event["Session"], f'{config["Name"]}-{get_random_string(5)}-fanin-expandednames.json', payload)
+            uerror(event["Session"], f'{config["Name"]}-{get_random_string(5)}-fanin-expandednames.json', expanded_names)
 
             # Check for existence of values
             if my_return_value_store.check_values_exist(session_context, expanded_names):
@@ -534,10 +534,12 @@ def lambda_handler(event, context):
             "Error": "Invalid unum input"
         }
 
-    if "Session" in event:
-        uerror(event["Session"], f'{config["Name"]}-{get_random_string(5)}-input.json', event)
-
     user_function_input = ingress(event, context)
+
+    if "Session" in event:
+        rs = get_random_string(5)
+        uerror(event["Session"], f'{config["Name"]}-{rs}-input.json', event)
+        uerror(event["Session"], f'{config["Name"]}-{rs}-userfunctioninput.json', user_function_input)
     
     user_function_output = user_lambda(user_function_input, context)
     
