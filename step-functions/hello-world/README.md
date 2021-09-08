@@ -12,8 +12,6 @@ Execute gmaithe `hello-world` workflow by invoking the `hello` function.
 
 This workflow doesn't require any input data. See `events/trigger.json` for an example of an empty unum input.
 
-Alternatively, you can specify a SQS queue and the `world` will write its final outputs to the SQS queue.
-
 ## Output
 
 Optionally, the `world` function writes to a SQS queue.
