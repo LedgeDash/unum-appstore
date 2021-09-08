@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Globals:
+  Function:
+    Timeout: 900
+Outputs:
+  CreatePost:
+    Value: !GetAtt CreatePost.Arn
+  FindUrl:
+    Value: !GetAtt FindUrl.Arn
+  Publish:
+    Value: !GetAtt Publish.Arn
+  ShortenUrl:
+    Value: !GetAtt ShortenUrl.Arn
+  UserMention:
+    Value: !GetAtt UserMention.Arn
+Resources:
+  CreatePost:
+    Properties:
+      CodeUri: create_post/
+      Handler: app.lambda_handler
+      Policies:
+        - AmazonDynamoDBFullAccess
+        - AmazonS3FullAccess
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+  FindUrl:
+    Properties:
+      CodeUri: find_url/
+      Handler: app.lambda_handler
+      Policies:
+        - AmazonDynamoDBFullAccess
+        - AmazonS3FullAccess
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+  Publish:
+    Properties:
+      CodeUri: publish/
+      Handler: app.lambda_handler
+      Policies:
+        - AmazonDynamoDBFullAccess
+        - AmazonS3FullAccess
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+  ShortenUrl:
+    Properties:
+      CodeUri: shorten_url/
+      Handler: app.lambda_handler
+      Policies:
+        - AmazonDynamoDBFullAccess
+        - AmazonS3FullAccess
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+  UserMention:
+    Properties:
+      CodeUri: user_mention/
+      Handler: app.lambda_handler
+      Policies:
+        - AmazonDynamoDBFullAccess
+        - AmazonS3FullAccess
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+Transform: AWS::Serverless-2016-10-31

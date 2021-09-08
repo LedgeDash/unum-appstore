@@ -1,0 +1,47 @@
+{
+  "StartAt": "Parallel",
+  "States": {
+    "Parallel": {
+      "Type": "Parallel",
+      "Next": "CreatePost",
+      "Branches": [
+        {
+          "StartAt": "UserMention",
+          "States": {
+            "UserMention": {
+              "Type": "Task",
+              "Resource": "arn:aws:lambda:us-west-1:746167823857:function:text-processing-sf-UserMention-K2K0q8GITJHV",
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "FindUrl",
+          "States": {
+            "FindUrl": {
+              "Type": "Task",
+              "Resource": "arn:aws:lambda:us-west-1:746167823857:function:text-processing-sf-FindUrl-WS0SntZZ42Rq",
+              "Next": "ShortenUrl"
+            },
+            "ShortenUrl": {
+                "Type": "Task",
+                "Resource": "arn:aws:lambda:us-west-1:746167823857:function:text-processing-sf-ShortenUrl-GYfeuxCOjUYG",
+                "End":true
+            }
+          }
+        }
+      ]
+    },
+    "CreatePost" : {
+        "Type": "Task",
+        "Resource": "arn:aws:lambda:us-west-1:746167823857:function:text-processing-sf-CreatePost-wA7XvAkioDus",
+        "Next": "Publish"
+    },
+    "Publish": {
+        "Type": "Task",
+        "Resource": "arn:aws:lambda:us-west-1:746167823857:function:text-processing-sf-Publish-JuzZqoWnDSm8",
+        "End":true
+    }
+  }
+}
+

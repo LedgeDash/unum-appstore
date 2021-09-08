@@ -6,6 +6,16 @@
       "Next": "CreatePost",
       "Branches": [
         {
+          "StartAt": "UserMention",
+          "States": {
+            "UserMention": {
+              "Type": "Task",
+              "Resource": "UserMention",
+              "End": true
+            }
+          }
+        },
+        {
           "StartAt": "FindUrl",
           "States": {
             "FindUrl": {
@@ -19,17 +29,7 @@
                 "End":true
             }
           }
-        },
-        {
-          "StartAt": "UserMention",
-          "States": {
-            "UserMention": {
-              "Type": "Task",
-              "Resource": "UserMention",
-              "End": true
-            }
-          }
-        }
+        }        
       ]
     },
     "CreatePost" : {
