@@ -1,7 +1,7 @@
 # unum-appstore
 
 Each application contains a unum implementation (under directory `unum`) and a
-Step Functions implementation (under directory `step-functions).
+Step Functions implementation (under directory `step-functions`).
 
 ## Step Functions Implementations
 
