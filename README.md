@@ -8,7 +8,7 @@ Step Functions implementation (under directory `step-functions`).
 Step Functions implementations contain
 
   1. User functions, each in its own directory
-  2. An `events` directory with example workflow inputs for testing
+  2. An `events` directory with example workflow inputs
   3. A `template.yaml` for deploying the user functions and the Step Functions
      state machine with AWS SAM.
 
