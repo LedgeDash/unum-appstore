@@ -7,7 +7,8 @@ and concatenates the string `"world"`.
 This workflow doesn't require any input data.
 
 Alternatively, you can specify a SQS queue and the `world` will write its final
-outputs to the SQS queue.
+outputs to the SQS queue. See `step-functions/events/sqs.json` and 
+`unum/events/sqs.json` for examples.
 
 ## Output
 
