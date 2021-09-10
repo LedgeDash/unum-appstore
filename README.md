@@ -18,16 +18,19 @@ functions. The advantage of defining state machines inside `template.yaml` is
 that we can *programmatically insert Lambda ARNs into the state machine
 definitions as SAM deploys the stack*.
 
-As an example, let's look at the `hello-world` app. The state machine is defined
-as `HelloWorldSF` under `Resources`. Its `Type:
-AWS::StepFunctions::StateMachine` indicates that it's a Step Functions state
-machine. The `DefinitionString` under `Properties` defines the state machine.
-The definition string starts with `!Sub` which is a Cloudformation intrinsic
-function (see
+As an example, let's look at the `hello-world` app. The state machine is named
+`HelloWorldSF` under `Resources`. Its `Type: AWS::StepFunctions::StateMachine`
+indicates that it's a Step Functions state machine. The `DefinitionString` under
+`Properties` defines the state machine.  The definition string starts with
+`!Sub` which is a Cloudformation intrinsic function (see
 [here](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-sub.html)
 for more details). It replaces `${helloArn}` with `!GetAtt [ HelloFunction, Arn
 ]` and `${worldArn}` with `!GetAtt [ WorldFunction, Arn ]` during the
-Cloudformation stack creation process.
+Cloudformation stack creation process.  `!GetAtt [ HelloFunction, Arn ]` will
+get `HelloFunction`'s Arn once it's deployed.
+
+After deployment completes, you'll find a Step Function whose name starts with
+`HelloWorldSF` on AWS.
 
 ### How to deploy
 
