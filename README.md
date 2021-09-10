@@ -14,9 +14,9 @@ Step Functions implementations contain
 
 Note that the Step Functions state machine definition is in `template.yaml` and
 is deployed using AWS SAM as a Cloudformation stack along with the user Lambda
-functions. The advantage of defining the state machine inside `template.yaml` is
+functions. The advantage of defining state machines inside `template.yaml` is
 that we can *programmatically insert Lambda ARNs into the state machine
-definition as SAM deploys the stack*.
+definitions as SAM deploys the stack*.
 
 As an example, let's look at the `hello-world` app. The state machine is defined
 as `HelloWorldSF` under `Resources`. Its `Type:
