@@ -1,18 +1,13 @@
-
-
-Scenario: chain (`hello` function is `Scalar`, single next). 
-
-No fan-in, no propagating runtime metadata additional to the intermediary session context.
-
-# Execution
-
-Execute gmaithe `hello-world` workflow by invoking the `hello` function.
+This hello-world workflow consists of two functions: `hello` and `world`.
+`hello` simply returns the string `"Hello"`; `world` takes the output of `hello`
+and concatenates the string `"world"`.
 
 ## Input
 
-This workflow doesn't require any input data. See `events/trigger.json` for an example of an empty unum input.
+This workflow doesn't require any input data.
 
-Alternatively, you can specify a SQS queue and the `world` will write its final outputs to the SQS queue.
+Alternatively, you can specify a SQS queue and the `world` will write its final
+outputs to the SQS queue.
 
 ## Output
 

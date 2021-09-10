@@ -1,9 +1,0 @@
-{
-	"Name": "Hello",
-	"Next": {
-		"Name": "World"
-	},
-	"NextInput": "Scalar",
-	"Checkpoint": true,
-	"Start": true
-}

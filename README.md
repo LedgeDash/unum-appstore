@@ -1,5 +1,70 @@
 # unum-appstore
 
+Each application contains a unum implementation (under directory `unum`) and a
+Step Functions implementation (under directory `step-functions).
+
+## Step Functions Implementations
+
+Step Functions implementations contain
+
+  1. User functions, each in its own directory
+  2. An `events` directory with example workflow inputs for testing
+  3. A `template.yaml` for deploying the user functions and the Step Functions
+     state machine with AWS SAM.
+
+Note that the Step Functions state machine definition is in `template.yaml` and
+is deployed using AWS SAM as a Cloudformation stack along with the user Lambda
+functions. The advantage of defining the state machine inside `template.yaml` is
+that we can *programmatically insert Lambda ARNs into the state machine
+definition as SAM deploys the stack*.
+
+As an example, let's look at the `hello-world` app. The state machine is defined
+as `HelloWorldSF` under `Resources`. Its `Type:
+AWS::StepFunctions::StateMachine` indicates that it's a Step Functions state
+machine. The `DefinitionString` under `Properties` defines the state machine.
+The definition string starts with `!Sub` which is a Cloudformation intrinsic
+function (see
+[here](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-sub.html)
+for more details). It replaces `${helloArn}` with `!GetAtt [ HelloFunction, Arn
+]` and `${worldArn}` with `!GetAtt [ WorldFunction, Arn ]` during the
+Cloudformation stack creation process.
+
+### How to deploy
+
+To deploy a Step Functions workflow, use AWS SAM.
+
+Make sure you have the aws cli, aws sam cli and an AWS account correctly created
+and configured. Then use
+
+```bash
+sam build
+```
+
+to build the stack. You'll see a `.aws-sam` directory after build succeeds.
+
+Then use the `sam deploy` command to deploy your stack to AWS. You can either
+run
+
+```bash
+sam deploy --guided
+```
+
+which guides you through the deployment process. Make sure you pick a unique
+name for your stack (by default, SAM uses the generic name `sam-app`).
+
+Or you can specify deployment options directly, for example,
+
+```bash
+sam deploy --stack-name hello-world-sf --capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_IAM --s3-bucket aws-sam-cli-managed-default-samclisourcebucket-1p6wkdqwc2lfe --region us-west-1 --s3-prefix hello-world-sf
+```
+
+
+## unum Implementations
+
+## User Functions
+
+User functions in both implementations are identical.
+
 ## Test cases
 
 ### hello-world
