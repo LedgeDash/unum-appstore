@@ -55,14 +55,55 @@ sam deploy --guided
 which guides you through the deployment process. Make sure you pick a unique
 name for your stack (by default, SAM uses the generic name `sam-app`).
 
-Or you can specify deployment options directly, for example,
+`sam deploy --guided` might also create a `samconfig.toml` file. With the toml
+file, you can simply run `sam deploy` to update the stack without going through
+the guided process.
+
+Alternatively, you can specify deployment options directly on the command line,
+for example,
 
 ```bash
 sam deploy --stack-name hello-world-sf --capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_IAM --s3-bucket aws-sam-cli-managed-default-samclisourcebucket-1p6wkdqwc2lfe --region us-west-1 --s3-prefix hello-world-sf
 ```
 
-
 ## unum Implementations
+
+unum implementations contain
+
+  1. User functions, each in its own directory
+  2. An `events` directory with example workflow inputs
+  3. A `unum-template.yaml` that specifies workflow-wide configurations.
+     `unum-cli` can transform `unum-template.yaml` to platform specific template
+     files, such as AWS SAM template. For more details, see the [unum cli
+     documentations](https://github.com/LedgeDash/unum-compiler/blob/main/README.md#getting-started)
+     and the [unum template
+     documentations](https://github.com/LedgeDash/unum-compiler/blob/main/docs/template.md)
+  4. A `common` directory that contains the unum runtime libraries
+  5. One or more workflow definitions, such as Step Functions state machines.
+     For more information, see the [unum frontend documentation]().
+
+For example, programmers can build an unum workflow by writing a Step Functions
+state machine where Lambda functions in `Task` states are refered to by their
+names in the `unum-template.yaml` (instead of their AWS Arns as in actual Step
+Functions). Based on the Step Functions state machine, the unum frontend
+compiler can derive a unum configuration for each function in the workflow and
+place the configuration file (`unum-config.json`) in its directory. In some
+cases (e.g., a Step Functions state machine that starts with a fan-out state,
+such as `Parallel` or `Map`), the frontend compiler might add additional
+functions to the workflow. The added functions are fully created by the compiler
+(i.e., the directory, the `app.py`, `unum-config.json`, `requirements.txt`
+files, etc.). Programmers don't need to modify them.
+
+Alternatively, programmers can opt to write unum configurations for each
+function by hand, in which case they do not need to provide a workflow
+definition such as a Step Functions state machine. 
+
+Once all functions have a `unum-config.json` file under their directory, you can
+build the workflow with `unum-cli build`. You can specify which serverless
+platform to build against. For more details, see the [unun cli
+documentation](https://github.com/LedgeDash/unum-compiler/blob/main/README.md#getting-started).
+
+
 
 ## User Functions
 

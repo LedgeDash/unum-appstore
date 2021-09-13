@@ -3,7 +3,6 @@ Globals:
   UnumIntermediaryDataStoreType: s3
   UnumIntermediaryDataStoreName: unum-return-value-store
   Checkpoint: true
-
 Functions:
   Hello:
     Properties:
