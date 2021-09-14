@@ -12,3 +12,5 @@ Functions:
     Properties:
       CodeUri: world/
       Runtime: python3.8
+      Policies:
+        - AmazonSNSFullAccess
