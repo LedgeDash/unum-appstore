@@ -115,11 +115,19 @@ def invoke_lambda(function_name, payload_file):
         stdout_msg = json.loads(ret.stdout.decode("utf-8"))
         if stdout_msg["StatusCode"] == 200:
             print(f'Execution Succeeded\nMessage Returned:')
-            os.system('cat tmp')
+            try:
+                with open('tmp') as f:
+                    print(f.read())
+            except Exception as e:
+                raise e
             return 0
         else:
             print(f'Execution Failed\nMessage Returned:')
-            os.system('cat tmp')
+            try:
+                with open('tmp') as f:
+                    print(f.read())
+            except Exception as e:
+                raise e
             return -1
     else:
         print(f'Invocation Failed:')
