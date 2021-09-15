@@ -8,6 +8,7 @@ Functions:
     Properties:
       CodeUri: hello/
       Runtime: python3.8
+      Start: true
   World:
     Properties:
       CodeUri: world/
