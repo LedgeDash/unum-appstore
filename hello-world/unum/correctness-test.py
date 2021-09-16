@@ -2,6 +2,7 @@
 from cfn_tools import load_yaml, dump_yaml
 import json, os, sys, subprocess, time
 import argparse
+from datetime import datetime
 
 ''' Simple correctness test client
 
@@ -63,97 +64,43 @@ def check_cloudformation_stack_exist(stack_name):
     else:
         return True
 
-def aws_correctness_test(args):
-    # Test for AWS
-    # clean up
-    restore()
 
-    # compile from Step Functions
-    print(f'\033[33mCompiling Step Function into unum workflow\033[0m\n')
-    os.system("sf -pu -o trim")
-    print(f'\n\033[32mCompiling Step Function into unum workflow Succeeded\033[0m\n')
 
-    # create template.yaml and build
-    os.system("unum-cli build -g")
+def wait_workflow_log(timeout, function_arn_mapping):
+    ''' Given a function to arn mapping, wait for all Lambdas in the workflow
+    to populate Cloudwatch logs
 
-    # deploy
-    os.system("unum-cli deploy")
-
-    
-    with open('unum-template.yaml') as f:
-        unum_template = load_yaml(f.read())
-
-    with open('function-arn.yaml') as f:
-        function_arn_mapping = load_yaml(f.read())
-
-    # invoke the workflow by invoking the start function
-    for f in unum_template["Functions"]:
-        if "Start" in unum_template["Functions"][f]["Properties"] and unum_template["Functions"][f]["Properties"]["Start"]:
-            entry_function = f
-
-    print(f'Functions in this workflow:')
-    print(f'{function_arn_mapping}')
-
-    print(f'\n\033[33mInvoking the entry function\033[0m\n')
-    print(f'Entry Function: {entry_function}, ARN: {function_arn_mapping[entry_function]}\n')
-
-    if os.path.isfile('events/event.json'):
-        ret = invoke_lambda(function_arn_mapping[entry_function], 'events/event.json')
-        if ret != 0:
-            print(f'Workflow Invocation Failed')
-            return -1
-    else:
-        print(f'Cannot invoke lambda. Need events/event.json')
-        return -2
-
-    # Get the CloudWatch Logs for all functions in the workflow.
-
-    # First make sure all Lambda's have their CloudWatch logs populated. This
-    # could take a while, depending on how long the workflow is. Moreover, the
-    # logs might not include all the events for a complete execution. There
-    # could be a big time gap between the START event and the END event.
-    # Therefore, we first wait for a period (the initial waiting period)
-    # before checking the logs. Then we periodically check until all logs are
-    # populated or a timeout happens which indicates that the workflow likely
-    # broke somewhere.
-    #
-    # The initial waiting period is a cmdline option and allows the user to
-    # customize based on their experienced guess on the workflow duration.
-
-    # first wait for a period of time.
-    print(f'\033[33m\nWaiting for workflow to complete before checking logs for execution correctness\033[0m\n')
-    time.sleep(args.wait_limit)
-
-    LOGCHECK_TIMEOUT = 600 #sec
-    
+    @param timeout int seconds
+    '''
     elapsed_time = 0
-    print(f'\033[33m\nChecking Cloudwatch logs for all functions in the workflow\033[0m\n')
+    GAP = 10
     while check_workflow_log_exist(function_arn_mapping) == False:
         print(f'Waiting for logs to populate ......')
-        time.sleep(10) # it takes time for cloudwatch logs to be populated
-        elapsed_time = elapsed_time + 10
+        time.sleep(GAP) # it takes time for cloudwatch logs to be populated
+        elapsed_time = elapsed_time + GAP
         if elapsed_time >= LOGCHECK_TIMEOUT:
-            break
-
-    if check_workflow_execution_success(function_arn_mapping):
-        print(f'\033[32m\nAll functions in the workflow succeeded\033[0m')
+            return False
+    return True
 
 
-def check_workflow_execution_success(function_arn_mapping):
-    '''
+def check_workflow_execution_success(workflow_logs):
+    ''' Given a workflow's Cloudwatch logs (returned by
+    get_workflow_execution_log()), check if the execution was successful
 
     Requries the log group for each function to only have streams that are
     associated with this particular workflow invocation.
+
+    See the check_lambda_log_success() for details on what checks are performs
     '''
-    log_events = get_workflow_execution_log(function_arn_mapping)
-    for f in log_events:
-        suc, diag = check_lambda_log_success(log_events[f])
+
+    for f in workflow_logs:
+        suc, diag = check_lambda_log_success(workflow_logs[f])
         if suc == False:
 
             print(f'\033[31m[*] Function {f} has errors in its logs:\033[0m')
             print(f'\033[31m{diag}')
             print(f'Raw Logs:')
-            print(f'{log_events[f]}\033[0m')
+            print(f'{workflow_logs[f]}\033[0m')
 
             return False
         else:
@@ -292,8 +239,44 @@ def delete_lambda_log(function_name):
                               capture_output=True)
 
         if ret.returncode !=0:
-            print(f'delete log group failed due to:\n {ret.stderr.decode("utf-8")}')
+            print(f'Failed to delete log group{log_group_name}:\n {ret.stderr.decode("utf-8")}')
 
+def delete_all_log_streams(function_name):
+    ''' Delete all streams of a Lambda's Cloudwatch log group without deleting
+    the log group
+    '''
+    success = True
+    if check_lambda_log_exist(function_name):
+        log_group_name = f'/aws/lambda/{function_name}'
+        ret = subprocess.run(["aws", "logs", "describe-log-streams",
+                              "--log-group-name", log_group_name],
+                              capture_output=True)
+        if ret.returncode != 0:
+            print(f'Failed to get log streams for {function_name}')
+            print(ret.stderr.decode("utf-8"))
+            return False
+
+
+        streams = json.loads(ret.stdout.decode("utf-8"))
+        streams = streams["logStreams"]
+
+        stream_names = [s["logStreamName"] for s in streams]
+
+        for sn in stream_names:
+            ret = subprocess.run(["aws", "logs", "delete-log-stream",
+                              "--log-group-name", log_group_name,
+                              "--log-stream-name", sn],
+                              capture_output=True)
+
+            if ret.returncode != 0:
+                print(f'Failed to delete log stream {sn} for log group {log_group_name}')
+                print(ret.stderr.decode("utf-8"))
+                success = False
+
+        return success
+
+    else:
+        return True
 
 
 def check_workflow_log_exist(function_arn_mapping):
@@ -334,9 +317,15 @@ def check_lambda_log_exist(function_name):
         return False
 
 
-def invoke_lambda(function_name, payload_file):
+def invoke_lambda(function_arn, payload_file):
+    '''
+
+    @return
+    if execution succeeded, return True, "<ret>"
+    if execution failed, return False, "<error>"
+    '''
     ret = subprocess.run(["aws", "lambda", "invoke",
-                              "--function-name", function_name,
+                              "--function-name", function_arn,
                               "--invocation-type", "RequestResponse",
                               "--payload", f'fileb://{payload_file}',
                               "tmp"],
@@ -344,40 +333,214 @@ def invoke_lambda(function_name, payload_file):
     if ret.returncode == 0:
         stdout_msg = json.loads(ret.stdout.decode("utf-8"))
         if stdout_msg["StatusCode"] == 200:
-            print(f'\033[32mExecution Succeeded\033[0m\n Message Returned:')
             try:
                 with open('tmp') as f:
-                    print(f.read())
+                    return True, f.read()
             except Exception as e:
-                raise e
-            return 0
+                return True, "No output"
         else:
-            print(f'\033[31mExecution Failed\033[0m\nMessage Returned:')
             try:
                 with open('tmp') as f:
-                    print(f.read())
+                    return False, f.read()
             except Exception as e:
-                raise e
+                return False, "No output"
+    else:
+        return False, ret.stderr.decode("utf-8")
+
+
+
+def aws_correctness_test(args):
+    # clean up
+    restore()
+
+    # compile from Step Functions
+    print(f'\033[33mCompiling Step Function into unum workflow\033[0m\n')
+    os.system("sf -pu -o trim")
+    print(f'\n\033[32mCompiling Step Function into unum workflow Succeeded\033[0m\n')
+
+    # create template.yaml and build
+    os.system("unum-cli build -g")
+
+    # deploy
+    os.system("unum-cli deploy")
+
+    
+    with open('unum-template.yaml') as f:
+        unum_template = load_yaml(f.read())
+
+    with open('function-arn.yaml') as f:
+        function_arn_mapping = load_yaml(f.read())
+
+    print(f'Functions in this workflow:')
+    print(f'{function_arn_mapping}')
+
+    # Find the entry functions
+    for f in unum_template["Functions"]:
+        if "Start" in unum_template["Functions"][f]["Properties"] and unum_template["Functions"][f]["Properties"]["Start"]:
+            entry_function = f
+
+    # invoke the workflow by invoking the start function
+    print(f'\n\033[33mInvoking the entry function\033[0m\n')
+    print(f'Entry Function: {entry_function}, ARN: {function_arn_mapping[entry_function]}\n')
+
+    if os.path.isfile(args.payload):
+        suc, msg = invoke_lambda(function_arn_mapping[entry_function], args.payload)
+        if suc == False:
+            print(f'Workflow Invocation Failed: {msg}')
             return -1
     else:
-        print(f'Invocation Failed:')
-        print(ret.stderr.decode("utf-8"))
+        print(f'Cannot invoke lambda. Need events/event.json')
         return -2
+
+    # Get the CloudWatch Logs for all functions in the workflow.
+
+    # First make sure all Lambda's have their CloudWatch logs populated. This
+    # could take a while, depending on how long the workflow is. Moreover, the
+    # logs might not include all the events for a complete execution. There
+    # could be a big time gap between the START event and the END event.
+    # Therefore, we first wait for a period (the initial waiting period)
+    # before checking the logs. Then we periodically check until all logs are
+    # populated or a timeout happens which indicates that the workflow likely
+    # broke somewhere.
+    #
+    # The initial waiting period is a cmdline option and allows the user to
+    # customize based on their experienced guess on the workflow duration.
+
+    # first wait for a period of time.
+    print(f'\033[33m\nWaiting for workflow to complete before checking logs for execution correctness\033[0m\n')
+    time.sleep(args.wait_limit)
+
+    LOGCHECK_TIMEOUT = 600 #sec
+    if wait_workflow_log(LOGCHECK_TIMEOUT, function_arn_mapping) == False:
+        print(f'Not all Lambda log are present')
+    
+    print(f'\033[33m\nChecking Cloudwatch logs for all functions in the workflow\033[0m\n')
+
+    logs = get_workflow_execution_log(function_arn_mapping)
+
+    if check_workflow_execution_success(logs):
+        print(f'\033[32m\nAll functions in the workflow succeeded\033[0m')
+    else:
+        print(f'\033[31m\nSome functions in the workflow failed. See trace for more details\033[0m')
+
+
+
+
+def performance_test(args):
+    # clean up
+    restore()
+
+    # compile from Step Functions
+    print(f'\033[33mCompiling Step Function into unum workflow\033[0m\n')
+    os.system("sf -pu -o trim")
+    print(f'\n\033[32mCompiling Step Function into unum workflow Succeeded\033[0m\n')
+
+    # create template.yaml and build
+    os.system("unum-cli build -g")
+
+    # deploy
+    os.system("unum-cli deploy")
+
+    with open('unum-template.yaml') as f:
+        unum_template = load_yaml(f.read())
+
+    with open('function-arn.yaml') as f:
+        function_arn_mapping = load_yaml(f.read())
+
+    print(f'Functions in this workflow:')
+    print(f'{function_arn_mapping}')
+
+    # Find the entry function
+    for f in unum_template["Functions"]:
+        if "Start" in unum_template["Functions"][f]["Properties"] and unum_template["Functions"][f]["Properties"]["Start"]:
+            entry_function = f
+
+    # invoke the workflow by invoking the start function
+    print(f'\n\033[33mInvoking the entry function\033[0m\n')
+    print(f'Entry Function: {entry_function}, ARN: {function_arn_mapping[entry_function]}\n')
+
+    if os.path.isfile(args.payload) == False:
+        print(f'\033[31m\nFailed: Cannot invoke workflow')
+        print(f'Make sure input payload file exists. Specified payload: {args.payload}\033[0m')
+        exit(1)
+
+    # warm up rounds to 1. avoid Lambda cold starts 2. populate Cloudwatch logs
+    # Warm up by invoking the workflow for a few times quickly
+    NUM_WARM_UP = 5
+    for i in range(NUM_WARM_UP):
+        suc, msg = invoke_lambda(function_arn_mapping[entry_function], args.payload)
+        if suc == False:
+            print(f'\033[31m\nWorkflow Invocation Failed during Warm-up: {msg}\033[0m\n')
+
+    # wait for the log groups to populate
+
+    # first wait for a period of time.
+    print(f'\033[33m\nWaiting for workflow to complete before checking logs for execution correctness\033[0m\n')
+    time.sleep(args.wait_limit)
+
+    LOGCHECK_TIMEOUT = 600 #sec
+    if wait_workflow_log(LOGCHECK_TIMEOUT, function_arn_mapping) == False:
+        print(f'Not all Lambda log are present')
+
+    # delete existing Cloudwatch log streams without deleting the log groups
+    if delete_all_log_streams(function_arn_mapping) == False:
+        print(f'Failed to delete all existing log streams for all Lambda')
+        exit(1)
+
+    # Run the actual experiments
+    # Invoke workflow at a low rate for 100 runs
+    NUM_RUNS = 10
+
+    for i in range(NUM_WARM_UP):
+        suc, msg = invoke_lambda(function_arn_mapping[entry_function], args.payload)
+        if suc == False:
+            print(f'\033[31mIteration {i} failed to invoke the entry function:{msg}\033[0m\n')
+        time.sleep(args.interval)
+
+    # Collect the Cloudwatch logs and write to local files
+    logs = get_workflow_execution_log(function_arn_mapping)
+
+    if check_workflow_execution_success(logs):
+        print(f'\033[32m\nAll functions in the workflow succeeded\033[0m')
+
+    # write to a local directory "logs"
+    try:
+        os.mkdir('logs')
+    except FileExistsError as e:
+        pass
+
+    local_timestamp = datetime.now()
+    for f in logs:
+        fn = f'{f}-{local_timestamp}.json'
+        print(f'Outputing logs for function {f}: {fn}')
+
+        with open(fn, 'w') as l:
+            print(logs[f])
+            l.write(str(logs[f]))
+
+
 
 
 def main():
     parser = argparse.ArgumentParser(description='Simple correctness test client')
-    parser.add_argument('-r', '--restore', required=False, action="store_true")
-    parser.add_argument('-c', '--cleanup', required=False, action="store_true")
-    parser.add_argument('-l', '--wait_limit', required=False, default = 10)
+    parser.add_argument('-r', '--restore', required=False, action="store_true", help='restore the unum application without running tests')
+    parser.add_argument('-c', '--cleanup', required=False, action="store_true", help='restore the unum application after running tests')
+    parser.add_argument('-l', '--wait_limit', required=False, default = 10, help="Wait time for Cloudwatch logs to populate")
+    parser.add_argument('-i', '--interval', required=False, default = 5, help="Interval between invocations for performance test (in seconds)")
     parser.add_argument('--clear_cloudwatch_logs', required=False, action="store_true")
+    parser.add_argument('-p', '--performance', required=False, action="store_true", help='run performance tests instead of correctness tests')
+    parser.add_argument('--payload', required=False, default = 'events/event.json', help="Input payload file for workflow")
+
     args = parser.parse_args()
 
     if args.restore:
         restore()
         return
 
-    aws_correctness_test(args)
+    if args.performance:
+        performance_test(args)
+    else:
+        aws_correctness_test(args)
 
     if args.cleanup:
         restore()
