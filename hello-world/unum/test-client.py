@@ -228,7 +228,7 @@ def get_lambda_log(function_name):
 
 
 def delete_lambda_log(function_name):
-    ''' Delete the log group for a Lambda function
+    ''' Delete the LOG GROUP of a Lambda function
     '''
     if check_lambda_log_exist(function_name):
 
@@ -241,8 +241,23 @@ def delete_lambda_log(function_name):
         if ret.returncode !=0:
             print(f'Failed to delete log group{log_group_name}:\n {ret.stderr.decode("utf-8")}')
 
-def delete_all_log_streams(function_name):
-    ''' Delete all streams of a Lambda's Cloudwatch log group without deleting
+def delete_workflow_log_streams(function_arn_mapping):
+    ''' Delete the log streams for all functions in a workflow, keeping the
+    log groups
+    '''
+    for f in function_arn_mapping:
+        function_arn = function_arn_mapping[f]
+        function_name = function_arn.split(':')[-1]
+
+        if delete_lambda_log_streams(function_name) == False:
+            print(f'Failed to delete log streams for function {function_name}')
+
+    return
+
+
+
+def delete_lambda_log_streams(function_name):
+    ''' Delete all LOG STREAMS of a Lambda's Cloudwatch log group without deleting
     the log group
     '''
     success = True
@@ -255,7 +270,6 @@ def delete_all_log_streams(function_name):
             print(f'Failed to get log streams for {function_name}')
             print(ret.stderr.decode("utf-8"))
             return False
-
 
         streams = json.loads(ret.stdout.decode("utf-8"))
         streams = streams["logStreams"]
@@ -466,6 +480,7 @@ def performance_test(args):
 
     # warm up rounds to 1. avoid Lambda cold starts 2. populate Cloudwatch logs
     # Warm up by invoking the workflow for a few times quickly
+    print(f'Warm-up rounds ......')
     NUM_WARM_UP = 5
     for i in range(NUM_WARM_UP):
         suc, msg = invoke_lambda(function_arn_mapping[entry_function], args.payload)
@@ -475,7 +490,7 @@ def performance_test(args):
     # wait for the log groups to populate
 
     # first wait for a period of time.
-    print(f'\033[33m\nWaiting for workflow to complete before checking logs for execution correctness\033[0m\n')
+    print(f'\033[33m\nWaiting for warm-up rounds to complete and Cloudwatch logs to populate ...... \033[0m\n')
     time.sleep(args.wait_limit)
 
     LOGCHECK_TIMEOUT = 600 #sec
@@ -483,19 +498,27 @@ def performance_test(args):
         print(f'Not all Lambda log are present')
 
     # delete existing Cloudwatch log streams without deleting the log groups
-    if delete_all_log_streams(function_arn_mapping) == False:
+    print(f'Clearing all Cloudwatch log streams ......')
+    if delete_workflow_log_streams(function_arn_mapping) == False:
         print(f'Failed to delete all existing log streams for all Lambda')
         exit(1)
 
-    # Run the actual experiments
-    # Invoke workflow at a low rate for 100 runs
-    NUM_RUNS = 10
+    time.sleep(5) # Cloudwatch sometimes will partially delete a stream if a write happens quickly after delete initiates...
 
-    for i in range(NUM_WARM_UP):
+    # Run the actual experiments
+    # Invoke workflow at a low rate for NUM_RUNS runs
+    NUM_RUNS = 2
+    print(f'\033[33mStart Experiment with {NUM_RUNS} runs\033[0m')
+
+    for i in range(NUM_RUNS):
+        print(f'{i+1}',end=' ')
         suc, msg = invoke_lambda(function_arn_mapping[entry_function], args.payload)
         if suc == False:
             print(f'\033[31mIteration {i} failed to invoke the entry function:{msg}\033[0m\n')
         time.sleep(args.interval)
+    print('\n')
+
+    time.sleep(args.wait_limit)
 
     # Collect the Cloudwatch logs and write to local files
     logs = get_workflow_execution_log(function_arn_mapping)
@@ -512,10 +535,9 @@ def performance_test(args):
     local_timestamp = datetime.now()
     for f in logs:
         fn = f'{f}-{local_timestamp}.json'
-        print(f'Outputing logs for function {f}: {fn}')
+        print(f'\033[32m[*] Outputing logs for function {f}: logs/{fn}\033[0m')
 
-        with open(fn, 'w') as l:
-            print(logs[f])
+        with open(f'logs/{fn}', 'w') as l:
             l.write(str(logs[f]))
 
 
