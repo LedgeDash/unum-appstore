@@ -4,6 +4,9 @@ import json, os, sys, subprocess, time
 import argparse
 from datetime import datetime
 
+import xlsxwriter
+import pickle
+
 ''' Simple correctness test client
 
 '''
@@ -507,7 +510,7 @@ def performance_test(args):
 
     # Run the actual experiments
     # Invoke workflow at a low rate for NUM_RUNS runs
-    NUM_RUNS = 2
+    NUM_RUNS = 10
     print(f'\033[33mStart Experiment with {NUM_RUNS} runs\033[0m')
 
     for i in range(NUM_RUNS):
@@ -533,12 +536,64 @@ def performance_test(args):
         pass
 
     local_timestamp = datetime.now()
-    for f in logs:
-        fn = f'{f}-{local_timestamp}.json'
-        print(f'\033[32m[*] Outputing logs for function {f}: logs/{fn}\033[0m')
 
-        with open(f'logs/{fn}', 'w') as l:
-            l.write(str(logs[f]))
+    # pickle the logs
+    # with open(f'logs-{local_timestamp}.pickle', 'wb') as p:
+    #     pickle.dump(logs, p)
+
+    for f in logs:
+        fn = f'{f}-{local_timestamp}'
+        print(f'\033[32m[*] Outputing logs for function {f}: logs/{fn}.xlsx\033[0m')
+
+        write_streams_to_excel(logs[f], f'logs/{fn}.xlsx')
+
+
+
+
+def write_streams_to_excel(streams, fn):
+    workbook = xlsxwriter.Workbook(f'{fn}')
+
+    # Add a bold format to use to highlight cells.
+    bold = workbook.add_format({'bold': 1})
+
+    for stream in streams:
+
+        worksheet = workbook.add_worksheet()
+        worksheet.write('A1', 'Timestamp', bold)
+        worksheet.write('B1', 'Event Type', bold)
+        worksheet.write('C1', 'Request ID', bold)
+        worksheet.write('D1', 'Message', bold)
+
+        # Start from the first cell below the headers.
+        row = 1
+        col = 0
+
+        for e in stream:
+            timestamp = e['timestamp']
+            if e['message'].startswith('START'):
+                event_type = 'START'
+                request_id = e['message'].split(' ')[2].rstrip('\n')
+            elif e['message'].startswith('END'):
+                event_type = 'END'
+                request_id = e['message'].split(' ')[2].rstrip('\n')
+            elif e['message'].startswith('REPORT'):
+                event_type = 'REPORT'
+                request_id = e['message'].split(' ')[2]
+                request_id = request_id.split('\t')[0]
+
+                metrics = e['message'].split('\t')[1:]
+                worksheet.write_string(row, col+3, str(metrics))
+
+            else:
+                raise ValueError(f'Unknown event type: {e["message"]}')
+
+            worksheet.write_number(row, col, timestamp)
+            worksheet.write_string(row, col+1, event_type)
+            worksheet.write_string(row, col+2, request_id)
+
+            row = row+1
+
+    workbook.close()
 
 
 
