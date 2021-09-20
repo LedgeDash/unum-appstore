@@ -1,0 +1,43 @@
+import json
+from datetime import datetime
+from functools import reduce 
+
+def to_datetime(elem):
+    if len(elem) != 1:
+        raise
+
+    time_str = list(elem)[0]
+    time = datetime.fromisoformat(time_str)
+
+    return (time, elem[time_str])
+
+def lambda_handler(event, context):
+    series = event["data"]
+    num_elem = len(series)
+
+    series = [to_datetime(elem) for elem in series]
+
+    delta = (series[1][0] - series[0][0]).total_seconds()/60 # difference between 2 timestamps in minutes
+
+    total_time_in_mins = delta*num_elem
+    total_power_consumption = reduce(lambda x, y: x+y[1], series, 0)
+
+    average_power_consumption = total_power_consumption/total_time_in_mins
+
+    if "sqs" in event:
+        return {
+            "starting_tsp": datetime.isoformat(series[0][0]),
+            "ending_tsp": datetime.isoformat(series[-1][0]),
+            "total_time": total_time_in_mins,
+            "total_power_consumption": total_power_consumption,
+            "average_power_consumption": average_power_consumption,
+            "sqs": event["sqs"]
+        }
+        
+    return {
+        "starting_tsp": datetime.isoformat(series[0][0]),
+        "ending_tsp": datetime.isoformat(series[-1][0]),
+        "total_time": total_time_in_mins,
+        "total_power_consumption": total_power_consumption,
+        "average_power_consumption": average_power_consumption
+    }

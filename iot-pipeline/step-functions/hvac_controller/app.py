@@ -10,9 +10,9 @@
 
 from datetime import datetime
 import json
+import boto3
 
 THRESHOLD = 1
-actuator_url='https://my-actuator.iot'   
 
 def lambda_handler(event, context):
 	average = event['average_power_consumption']
@@ -26,5 +26,9 @@ def lambda_handler(event, context):
 		"timestamp": datetime.now().isoformat(timespec='milliseconds'),
 		"reduce_power": command
 	}
+
+	if "sqs" in event:
+		client = boto3.client("sqs")
+		client.send_message(QueueUrl=event["sqs"], MessageBody=str(action))
 	
 	return action

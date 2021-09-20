@@ -1,0 +1,55 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Globals:
+  Function:
+    Timeout: 900
+Outputs:
+  AggregatorFunction:
+    Value: !GetAtt AggregatorFunction.Arn
+  HvacControllerFunction:
+    Value: !GetAtt HvacControllerFunction.Arn
+Resources:
+  AggregatorFunction:
+    Properties:
+      CodeUri: aggregator/
+      Handler: app.lambda_handler
+      Policies:
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+  HvacControllerFunction:
+    Properties:
+      CodeUri: hvac_controller/
+      Handler: app.lambda_handler
+      Policies:
+        - AmazonSQSFullAccess 
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+    
+  IoTSF:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      RoleArn: arn:aws:iam::746167823857:role/stepfunctions-ex
+      DefinitionString:
+        !Sub
+          - |-
+            {
+              "Comment": "IoT data processing pipeline",
+              "StartAt": "Aggregator",
+              "States": {
+                "Aggregator": {
+                  "Type": "Task",
+                  "Resource": "${aggregatorArn}",
+                  "Next": "HvacController"
+                },
+                "HvacController": {
+                  "Type": "Task",
+                  "Resource": "${hvacControllerArn}",
+                  "End": true
+                }
+              }
+            }
+          - {aggregatorArn: !GetAtt [ AggregatorFunction, Arn ], hvacControllerArn: !GetAtt [ HvacControllerFunction, Arn ]}
