@@ -81,7 +81,7 @@ def wait_workflow_log(timeout, function_arn_mapping):
         print(f'Waiting for logs to populate ......')
         time.sleep(GAP) # it takes time for cloudwatch logs to be populated
         elapsed_time = elapsed_time + GAP
-        if elapsed_time >= LOGCHECK_TIMEOUT:
+        if elapsed_time >= timeout:
             return False
     return True
 
@@ -606,7 +606,7 @@ def main():
     parser.add_argument('-i', '--interval', required=False, default = 5, help="Interval between invocations for performance test (in seconds)")
     parser.add_argument('--clear_cloudwatch_logs', required=False, action="store_true")
     parser.add_argument('-p', '--performance', required=False, action="store_true", help='run performance tests instead of correctness tests')
-    parser.add_argument('--payload', required=False, default = 'events/event.json', help="Input payload file for workflow")
+    parser.add_argument('--payload', required=False, default = 'events/event.json', help="Input payload file for workflow [default: events/event.json]")
 
     args = parser.parse_args()
 
