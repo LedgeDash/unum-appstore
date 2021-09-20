@@ -3,15 +3,10 @@ Globals:
   UnumIntermediaryDataStoreType: s3
   UnumIntermediaryDataStoreName: unum-return-value-store
   Checkpoint: true
-
 Functions:
   F1:
     Properties:
       CodeUri: f1/
-      Runtime: python3.8
-  UnumMap:
-    Properties:
-      CodeUri: unum_map/
       Runtime: python3.8
   Summary:
     Properties:
