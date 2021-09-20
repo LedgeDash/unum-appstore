@@ -1,5 +1,5 @@
 Globals:
-  ApplicationName: unum-map
+  ApplicationName: unum-map-nowait
   UnumIntermediaryDataStoreType: s3
   UnumIntermediaryDataStoreName: unum-return-value-store
   Checkpoint: true
