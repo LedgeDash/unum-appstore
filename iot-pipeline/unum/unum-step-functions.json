@@ -1,0 +1,16 @@
+{
+  "Comment": "A Hello World example of the Amazon States Language using Pass states",
+  "StartAt": "Aggregator",
+  "States": {
+    "Aggregator": {
+      "Type": "Task",
+      "Resource": "Aggregator",
+      "Next": "HvacController"
+    },
+    "HvacController": {
+      "Type": "Task",
+      "Resource": "HvacController",
+      "End": true
+    }
+  }
+}

@@ -9,7 +9,10 @@ Functions:
     Properties:
       CodeUri: aggregator/
       Runtime: python3.8
+      Start: true
   HvacController:
     Properties:
       CodeUri: hvac_controller/
       Runtime: python3.8
+      Policies:
+        - AmazonSQSFullAccess
