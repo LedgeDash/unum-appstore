@@ -10,7 +10,7 @@ import pickle
 ''' Simple correctness test client
 
 '''
-def restore():
+def restore(args):
     ''' delete the following files and resources:
     1. .aws-sam/ (unum-cli build)
     2. unum runtime files (i.e., unum.py, ds.py) in each function directory (unum-cli build)
@@ -29,8 +29,9 @@ def restore():
     print(f'\033[33m Remove unum build artifacts\033[0m')
 
     # item 3,5,6
-    ret = subprocess.run(["sf", "-c"], capture_output=True)
-    print(f'\033[33m Remove frontend compiler artifacts\033[0m')
+    if args.skip_frontend == False:
+        ret = subprocess.run(["sf", "-c"], capture_output=True)
+        print(f'\033[33m Remove frontend compiler artifacts\033[0m')
 
     # item 7
     # check if the stack is deployed
@@ -368,12 +369,13 @@ def invoke_lambda(function_arn, payload_file):
 
 def aws_correctness_test(args):
     # clean up
-    restore()
+    restore(args)
 
     # compile from Step Functions
-    print(f'\033[33mCompiling Step Function into unum workflow\033[0m\n')
-    os.system("sf -pu -o trim")
-    print(f'\n\033[32mCompiling Step Function into unum workflow Succeeded\033[0m\n')
+    if args.skip_frontend == False:
+        print(f'\033[33mCompiling Step Function into unum workflow\033[0m\n')
+        os.system("sf -pu -o trim")
+        print(f'\n\033[32mCompiling Step Function into unum workflow Succeeded\033[0m\n')
 
     # create template.yaml and build
     os.system("unum-cli build -g")
@@ -445,12 +447,13 @@ def aws_correctness_test(args):
 
 def performance_test(args):
     # clean up
-    restore()
+    restore(args)
 
     # compile from Step Functions
-    print(f'\033[33mCompiling Step Function into unum workflow\033[0m\n')
-    os.system("sf -pu -o trim")
-    print(f'\n\033[32mCompiling Step Function into unum workflow Succeeded\033[0m\n')
+    if args.skip_frontend == False:
+        print(f'\033[33mCompiling Step Function into unum workflow\033[0m\n')
+        os.system("sf -pu -o trim")
+        print(f'\n\033[32mCompiling Step Function into unum workflow Succeeded\033[0m\n')
 
     # create template.yaml and build
     os.system("unum-cli build -g")
@@ -607,11 +610,12 @@ def main():
     parser.add_argument('--clear_cloudwatch_logs', required=False, action="store_true")
     parser.add_argument('-p', '--performance', required=False, action="store_true", help='run performance tests instead of correctness tests')
     parser.add_argument('--payload', required=False, default = 'events/event.json', help="Input payload file for workflow [default: events/event.json]")
+    parser.add_argument('--skip_frontend', required=False, action="store_true", help='Skip frontend compilation')
 
     args = parser.parse_args()
 
     if args.restore:
-        restore()
+        restore(args)
         return
 
     if args.performance:
@@ -620,7 +624,7 @@ def main():
         aws_correctness_test(args)
 
     if args.cleanup:
-        restore()
+        restore(args)
 
 if __name__ == '__main__':
     main()
