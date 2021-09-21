@@ -17,10 +17,6 @@ Functions:
     Properties:
       CodeUri: f3/
       Runtime: python3.8
-  UnumMap:
-    Properties:
-      CodeUri: unum_map/
-      Runtime: python3.8
   Summary:
     Properties:
       CodeUri: summary/
