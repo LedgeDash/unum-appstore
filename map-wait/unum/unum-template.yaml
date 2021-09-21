@@ -12,3 +12,8 @@ Functions:
     Properties:
       CodeUri: summary/
       Runtime: python3.8
+  UnumMap0:
+    Properties:
+      CodeUri: UnumMap0/
+      Runtime: python3.8
+      Start: true

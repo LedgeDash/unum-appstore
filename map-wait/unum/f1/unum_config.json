@@ -1,0 +1,16 @@
+{
+    "Name": "F1",
+    "Next": {
+        "Name": "Summary",
+        "Conditional" : "$0 == $size -1"
+    },
+    "NextInput": {
+        "Fan-in": {
+            "Values": [
+                "F1-unumIndex-*"
+            ],
+            "Wait": true
+        }
+    },
+    "Checkpoint": true
+}
