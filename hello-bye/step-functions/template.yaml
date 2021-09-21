@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Globals:
+  Function:
+    Timeout: 900
+Outputs:
+  HelloFunction:
+    Value: !GetAtt HelloFunction.Arn
+  ByeFunction:
+    Value: !GetAtt ByeFunction.Arn
+  WorldFunction:
+    Value: !GetAtt WorldFunction.Arn
+Resources:
+  HelloFunction:
+    Properties:
+      CodeUri: hello/
+      Handler: app.lambda_handler
+      Policies:
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+  ByeFunction:
+    Properties:
+      CodeUri: bye/
+      Handler: app.lambda_handler
+      Policies:
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+  WorldFunction:
+    Properties:
+      CodeUri: world/
+      Handler: app.lambda_handler
+      Policies:
+        - AmazonSQSFullAccess 
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+    
+  HelloByeWorldSF:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      RoleArn: arn:aws:iam::746167823857:role/stepfunctions-ex
+      DefinitionString:
+        !Sub
+          - |-
+            {
+              "Comment": "Hello or Bye world",
+              "StartAt": "GreetingChoice",
+              "States": {
+                "GreetingChoice": {
+                  "Type": "Choice",
+                  "Choices": [
+                    {
+                      "Variable": "$",
+                      "StringEquals": "hello",
+                      "Next": "Hello"
+                    },
+                    {
+                      "Variable": "$",
+                      "StringEquals": "bye",
+                      "Next": "Bye"
+                    }
+                  ]
+                },
+                "Hello": {
+                  "Type": "Task",
+                  "Resource": "${helloArn}",
+                  "Next": "World"
+                },
+                "Bye": {
+                  "Type": "Task",
+                  "Resource": "${byeArn}",
+                  "Next": "World"
+                },
+                "World": {
+                  "Type": "Task",
+                  "Resource": "${worldArn}",
+                  "End": true
+                }
+              }
+            }
+          - {helloArn: !GetAtt [ HelloFunction, Arn ], byeArn: !GetAtt [ ByeFunction, Arn ], worldArn: !GetAtt [ WorldFunction, Arn ]}

@@ -140,7 +140,7 @@ def check_lambda_log_success(log_events):
                 if e["message"].startswith('[ERROR]') or e["message"].startswith('[Error]'):
                     return False, e["message"]
         else:
-            print('Unknown stream result: {stream}')
+            print(f'Unknown stream result: {stream}')
 
     return True, None
 
@@ -429,7 +429,7 @@ def aws_correctness_test(args):
     print(f'\033[33m\nWaiting for workflow to complete before checking logs for execution correctness\033[0m\n')
     time.sleep(args.wait_limit)
 
-    LOGCHECK_TIMEOUT = 600 #sec
+    LOGCHECK_TIMEOUT = 20 #sec
     if wait_workflow_log(LOGCHECK_TIMEOUT, function_arn_mapping) == False:
         print(f'Not all Lambda log are present')
     
@@ -499,7 +499,7 @@ def performance_test(args):
     print(f'\033[33m\nWaiting for warm-up rounds to complete and Cloudwatch logs to populate ...... \033[0m\n')
     time.sleep(args.wait_limit)
 
-    LOGCHECK_TIMEOUT = 600 #sec
+    LOGCHECK_TIMEOUT = 20 #sec
     if wait_workflow_log(LOGCHECK_TIMEOUT, function_arn_mapping) == False:
         print(f'Not all Lambda log are present')
 

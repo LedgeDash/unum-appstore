@@ -1,3 +1,5 @@
+If workflow input is `hello`, return `Hello world!`, or if workflow input is `bye`, return `Bye world!`.
+
 Branch based on user function output with `Conditional`.
 
 The `Start` function should return the value of the `Value` field of the input event JSON. The unum runtime on `Start` should branch based on the user function's return value. The branch is a string comparison.
