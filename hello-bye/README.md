@@ -1,9 +1,9 @@
-If workflow input is `hello`, return `Hello world!`, or if workflow input is `bye`, return `Bye world!`.
+This workflow takes a string of either `hello` or `bye` as input, and returns
+`Hello world!` or `Bye world!`. It tests branching capability.
 
-Branch based on user function output with `Conditional`.
+The Step Functions implementation uses the `Choice` state. The unum
+implementation uses `Conditional`.
 
-The `Start` function should return the value of the `Value` field of the input event JSON. The unum runtime on `Start` should branch based on the user function's return value. The branch is a string comparison.
-
-Branches are expressed as a list in unum config. Only the taken branch function will be invoked and its input will have a `Fan-out` field whose `Index` is the branch's position in the list.
-
-The `World` function has `Pop` as a `Fan-out Modifier`.
+The unum implementation uses hand-written configurations. To test it using the
+test client, run `test-client.py --skip_frontend`. To restore, use
+`test-client.py --skip_frontend -r`.

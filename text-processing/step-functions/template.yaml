@@ -1,0 +1,118 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Globals:
+  Function:
+    Timeout: 900
+Outputs:
+  UserMentionFunction:
+    Value: !GetAtt UserMentionFunction.Arn
+  FindUrlFunction:
+    Value: !GetAtt FindUrlFunction.Arn
+  ShortenUrlFunction:
+    Value: !GetAtt ShortenUrlFunction.Arn
+  CreatePostFunction:
+    Value: !GetAtt CreatePostFunction.Arn
+  PublishFunction:
+    Value: !GetAtt PublishFunction.Arn
+Resources:
+  UserMentionFunction:
+    Properties:
+      CodeUri: user_mention/
+      Handler: app.lambda_handler
+      Policies:
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+  FindUrlFunction:
+    Properties:
+      CodeUri: find_url/
+      Handler: app.lambda_handler
+      Policies:
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+  ShortenUrlFunction:
+    Properties:
+      CodeUri: shorten_url/
+      Handler: app.lambda_handler
+      Policies:
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+  CreatePostFunction:
+    Properties:
+      CodeUri: create_post/
+      Handler: app.lambda_handler
+      Policies:
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+  PublishFunction:
+    Properties:
+      CodeUri: publish/
+      Handler: app.lambda_handler
+      Policies:
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+        - AmazonDynamoDBFullAccess
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+
+  TextProcessingSF:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      RoleArn: arn:aws:iam::746167823857:role/stepfunctions-ex
+      DefinitionString:
+        !Sub
+          - |-
+            {
+              "StartAt": "Parallel",
+              "States": {
+                "Parallel": {
+                  "Type": "Parallel",
+                  "Next": "CreatePost",
+                  "Branches": [
+                    {
+                      "StartAt": "UserMention",
+                      "States": {
+                        "UserMention": {
+                          "Type": "Task",
+                          "Resource": "${userMentionArn}",
+                          "End": true
+                        }
+                      }
+                    },
+                    {
+                      "StartAt": "FindUrl",
+                      "States": {
+                        "FindUrl": {
+                          "Type": "Task",
+                          "Resource": "${findUrlArn}",
+                          "Next": "ShortenUrl"
+                        },
+                        "ShortenUrl": {
+                            "Type": "Task",
+                            "Resource": "${shortenUrlArn}",
+                            "End":true
+                        }
+                      }
+                    }        
+                  ]
+                },
+                "CreatePost" : {
+                    "Type": "Task",
+                    "Resource": "${createPostArn}",
+                    "Next": "Publish"
+                },
+                "Publish": {
+                    "Type": "Task",
+                    "Resource": "${publishArn}",
+                    "End":true
+                }
+              }
+            }
+          - {userMentionArn: !GetAtt [ UserMentionFunction, Arn ], findUrlArn: !GetAtt [ FindUrlFunction, Arn ], shortenUrlArn: !GetAtt [ ShortenUrlFunction, Arn ], createPostArn: !GetAtt [ CreatePostFunction, Arn ], publishArn: !GetAtt [ PublishFunction, Arn ]}

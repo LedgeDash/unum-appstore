@@ -17,7 +17,7 @@ Once both `UserMention` and `ShortenUrl` completes, `CreatePost` is invoked with
 ```json
 {
         "user_names": ["bob", "alice"],
-        "urls": [["https://some.looooooooooooong-url.com","https://sh.ort/yi"],["https://someother.looooooooooooong-url.com","https://sh.ort/er"]]
+        "urls": [["https://some.long-url.com","https://sh.ort/yi"],["https://someother.long-url.com","https://sh.ort/er"]]
 }
 
 ```
