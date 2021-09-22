@@ -222,10 +222,10 @@ def get_lambda_log(function_name):
         if ret.returncode != 0:
             print(f'Failed to get events from log stream {s["logStreamName"]} for {function_name}')
             log_group_events.append({"error": ret.stderr.decode("utf-8")})
-
-        events = json.loads(ret.stdout.decode("utf-8"))
-        events = events["events"] # a list of dict
-        log_group_events.append(events) # a list of list of dict.
+        else:
+            events = json.loads(ret.stdout.decode("utf-8"))
+            events = events["events"] # a list of dict
+            log_group_events.append(events) # a list of list of dict.
 
     return log_group_events
 
@@ -497,7 +497,7 @@ def performance_test(args):
 
     # first wait for a period of time.
     print(f'\033[33m\nWaiting for warm-up rounds to complete and Cloudwatch logs to populate ...... \033[0m\n')
-    time.sleep(int(args.wait_limit))
+    time.sleep(int(args.wait_limit)*NUM_WARM_UP)
 
     LOGCHECK_TIMEOUT = 20 #sec
     if wait_workflow_log(LOGCHECK_TIMEOUT, function_arn_mapping) == False:
@@ -513,7 +513,7 @@ def performance_test(args):
 
     # Run the actual experiments
     # Invoke workflow at a low rate for NUM_RUNS runs
-    NUM_RUNS = 10
+    NUM_RUNS = 50
     print(f'\033[33mStart Experiment with {NUM_RUNS} runs\033[0m')
 
     for i in range(NUM_RUNS):
@@ -524,7 +524,7 @@ def performance_test(args):
         time.sleep(args.interval)
     print('\n')
 
-    time.sleep(int(args.wait_limit))
+    time.sleep(int(args.wait_limit)*NUM_RUNS)
 
     # Collect the Cloudwatch logs and write to local files
     logs = get_workflow_execution_log(function_arn_mapping)
