@@ -427,7 +427,7 @@ def aws_correctness_test(args):
 
     # first wait for a period of time.
     print(f'\033[33m\nWaiting for workflow to complete before checking logs for execution correctness\033[0m\n')
-    time.sleep(args.wait_limit)
+    time.sleep(int(args.wait_limit))
 
     LOGCHECK_TIMEOUT = 20 #sec
     if wait_workflow_log(LOGCHECK_TIMEOUT, function_arn_mapping) == False:
@@ -497,7 +497,7 @@ def performance_test(args):
 
     # first wait for a period of time.
     print(f'\033[33m\nWaiting for warm-up rounds to complete and Cloudwatch logs to populate ...... \033[0m\n')
-    time.sleep(args.wait_limit)
+    time.sleep(int(args.wait_limit))
 
     LOGCHECK_TIMEOUT = 20 #sec
     if wait_workflow_log(LOGCHECK_TIMEOUT, function_arn_mapping) == False:
@@ -524,7 +524,7 @@ def performance_test(args):
         time.sleep(args.interval)
     print('\n')
 
-    time.sleep(args.wait_limit)
+    time.sleep(int(args.wait_limit))
 
     # Collect the Cloudwatch logs and write to local files
     logs = get_workflow_execution_log(function_arn_mapping)
