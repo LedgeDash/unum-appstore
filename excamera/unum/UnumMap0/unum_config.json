@@ -1,0 +1,9 @@
+{
+    "Name": "UnumMap0",
+    "Next": {
+        "Name": "vpxenc",
+        "InputType": "Map"
+    },
+    "Checkpoint": true,
+    "Start": true
+}

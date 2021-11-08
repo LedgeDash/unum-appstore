@@ -1,0 +1,31 @@
+{
+    "Name": "xcdec",
+    "Next": [
+        {
+            "Name": "reencode",
+            "InputType": {
+                "Fan-in": {
+                    "Values": [
+                        "vpxenc-unumIndex-($0+1)",
+                        "xcdec-unumIndex-$0"
+                    ]
+                }
+            },
+            "Conditional": "$0<$size-1 and $0>0"
+        },
+        {
+            "Name": "rebase",
+            "InputType": {
+                "Fan-in": {
+                    "Values": [
+                        "vpxenc-unumIndex-($0+1)",
+                        "xcdec-unumIndex-$0"
+                    ]
+                }
+            },
+            "Conditional": "$0==0"
+        }
+    ],
+    "Next Payload Modifiers": ["$0=$0+1"],
+    "Checkpoint": true
+}

@@ -1,0 +1,20 @@
+{
+	"chunks": [
+		{"bucket":"excamera-input-6frames-16chunks", "file": "00000000.y4m"},
+		{"bucket":"excamera-input-6frames-16chunks", "file": "00000001.y4m"},
+		{"bucket":"excamera-input-6frames-16chunks", "file": "00000002.y4m"},
+		{"bucket":"excamera-input-6frames-16chunks", "file": "00000003.y4m"},
+		{"bucket":"excamera-input-6frames-16chunks", "file": "00000004.y4m"},
+		{"bucket":"excamera-input-6frames-16chunks", "file": "00000005.y4m"},
+		{"bucket":"excamera-input-6frames-16chunks", "file": "00000006.y4m"},
+		{"bucket":"excamera-input-6frames-16chunks", "file": "00000007.y4m"},
+		{"bucket":"excamera-input-6frames-16chunks", "file": "00000008.y4m"},
+		{"bucket":"excamera-input-6frames-16chunks", "file": "00000009.y4m"},
+		{"bucket":"excamera-input-6frames-16chunks", "file": "00000010.y4m"},
+		{"bucket":"excamera-input-6frames-16chunks", "file": "00000011.y4m"},
+		{"bucket":"excamera-input-6frames-16chunks", "file": "00000012.y4m"},
+		{"bucket":"excamera-input-6frames-16chunks", "file": "00000013.y4m"},
+		{"bucket":"excamera-input-6frames-16chunks", "file": "00000014.y4m"},
+		{"bucket":"excamera-input-6frames-16chunks", "file": "00000015.y4m"}
+	]
+}

@@ -1,0 +1,137 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Globals:
+  Function:
+    Timeout: 900
+    MemorySize: 3008
+Outputs:
+  VpxencFunction:
+    Value: !GetAtt VpxencFunction.Arn
+  XcdecFunction:
+    Value: !GetAtt XcdecFunction.Arn
+  GroupFunction:
+    Value: !GetAtt GroupFunction.Arn
+  ReencodeFunction:
+    Value: !GetAtt ReencodeFunction.Arn
+  RebaseFunction:
+    Value: !GetAtt RebaseFunction.Arn
+Resources:
+  VpxencFunction:
+    Properties:
+      CodeUri: vpxenc/
+      Handler: app.lambda_handler
+      Policies:
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+        - AmazonS3FullAccess
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+  XcdecFunction:
+    Properties:
+      CodeUri: xcdec/
+      Handler: app.lambda_handler
+      Policies:
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+        - AmazonS3FullAccess
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+  GroupFunction:
+    Properties:
+      CodeUri: group/
+      Handler: app.lambda_handler
+      Policies:
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+        - AmazonS3FullAccess
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+  ReencodeFunction:
+    Properties:
+      CodeUri: reencode/
+      Handler: app.lambda_handler
+      Policies:
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+        - AmazonS3FullAccess
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+  RebaseFunction:
+    Properties:
+      CodeUri: rebase/
+      Handler: app.lambda_handler
+      Policies:
+        - AWSLambdaRole
+        - AWSLambdaBasicExecutionRole
+        - AmazonS3FullAccess
+      Runtime: python3.8
+    Type: AWS::Serverless::Function
+  ExCameraSF:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      RoleArn: arn:aws:iam::746167823857:role/stepfunctions-ex
+      DefinitionString:
+        !Sub
+          - |-
+            {
+              "Comment": "ExCamera",
+              "StartAt": "vpxenc And xcdec",
+
+              "States": {
+
+                "vpxenc And xcdec": {
+                  "Type": "Map",
+                  "ItemsPath": "$.chunks",
+                  "ResultPath": "$",
+                  "MaxConcurrency": 0,
+                  "Next": "Group",
+                  "Iterator": {
+                    "StartAt": "vpxenc",
+
+                    "States": {
+
+                      "vpxenc": {
+                        "Type": "Task",
+                        "Resource": "${vpxencArn}",
+                        "Next": "xcdec"
+                      },
+                      "xcdec": {
+                        "Type": "Task",
+                        "Resource": "${xcdecArn}",
+                        "End": true
+                      }
+
+                    }
+                  }
+                },
+                "Group": {
+                  "Type": "Task",
+                  "Resource": "${groupArn}",
+                  "Next": "Re-encode"
+                },
+                "Re-encode": {
+                  "Type": "Map",
+                  "ItemsPath": "$",
+                  "ResultPath": "$",
+                  "MaxConcurrency": 0,
+                  "Next": "Rebase",
+                  "Iterator": {
+                    "StartAt": "xcenc Replace Key Frame",
+
+                    "States": {
+                      "xcenc Replace Key Frame": {
+                        "Type": "Task",
+                        "Resource": "${reencodeArn}",
+                        "End": true
+                      }
+                    }
+                  }
+                },
+                "Rebase": {
+                  "Type": "Task",
+                  "Resource": "${rebaseArn}",
+                  "End": true
+                }
+              }
+            }
+          - {vpxencArn: !GetAtt [ VpxencFunction, Arn ], xcdecArn: !GetAtt [ XcdecFunction, Arn ], groupArn: !GetAtt [ GroupFunction, Arn ], reencodeArn: !GetAtt [ ReencodeFunction, Arn ], rebaseArn: !GetAtt [ RebaseFunction, Arn ]}

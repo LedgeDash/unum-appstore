@@ -1,0 +1,30 @@
+Globals:
+  ApplicationName: unum-excamera-dynamodb
+  UnumIntermediaryDataStoreType: dynamodb
+  UnumIntermediaryDataStoreName: unum-dynamo-test-table
+  FaaSPlatform: aws
+  Checkpoint: true
+  Debug: false
+  MemorySize: 3008
+Functions:
+  UnumMap0:
+    Properties:
+      CodeUri: UnumMap0/
+      Runtime: python3.8
+      Start: true
+  vpxenc:
+    Properties:
+      CodeUri: vpxenc/
+      Runtime: python3.8
+  xcdec:
+    Properties:
+      CodeUri: xcdec/
+      Runtime: python3.8
+  reencode:
+    Properties:
+      CodeUri: reencode/
+      Runtime: python3.8
+  rebase:
+    Properties:
+      CodeUri: rebase/
+      Runtime: python3.8
