@@ -202,7 +202,7 @@ def main():
             else:
                 events = json.loads(ret.stdout.decode("utf-8"))
                 events = events["events"] # a list of dict
-                rebase_log_group_events = rebase_log_group_events + events # a list of list of dict.
+                rebase_log_group_events = rebase_log_group_events + events # a list of dict.
 
         # get the START tsp of UnumMap0
 
@@ -211,6 +211,8 @@ def main():
         for e in unum_map_log_group_events:
             if e['message'].startswith("START"):
                 start_tsp.append(e['timestamp'])
+
+        start_tsp = sorted(start_tsp, key=lambda d: d) 
         print(start_tsp)
 
         # get '[Unum] Rebase of chunk 00000815 completed' event
@@ -230,6 +232,17 @@ def main():
             print('len(start_tsp) != len(end_tsp')
 
         e2e_latency = [end_tsp[i]['timestamp'] - start_tsp[i] for i in range(len(start_tsp))] # in milliseconds
+
+        #---------
+        # start_tsp = start_tsp[int(len(start_tsp)/2):]
+
+        # e2e_latency = []
+
+        # for i in range(len(start_tsp)):
+        #     if end_tsp[i*2]['timestamp'] > end_tsp[i*2+1]['timestamp']:
+        #         e2e_latency.append(end_tsp[i*2]['timestamp'] - start_tsp[i])
+        #     else:
+        #         e2e_latency.append(end_tsp[i*2+1]['timestamp'] - start_tsp[i])
 
         # compute mean and std
         e2e_latency_np = np.array(e2e_latency)
