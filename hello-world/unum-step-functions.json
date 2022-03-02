@@ -1,5 +1,5 @@
 {
-  "Comment": "A Hello World example of the Amazon States Language using Pass states",
+  "Comment": "A Hello World example of Unum application",
   "StartAt": "Hello",
   "States": {
     "Hello": {

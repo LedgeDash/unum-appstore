@@ -1,7 +1,7 @@
 Globals:
-  ApplicationName: unum-hello-world-chain
-  UnumIntermediaryDataStoreType: s3
-  UnumIntermediaryDataStoreName: unum-return-value-store
+  ApplicationName: unum-hello-world
+  UnumIntermediaryDataStoreType: dynamodb
+  UnumIntermediaryDataStoreName: unum-intermediate-datastore
   Checkpoint: true
 Functions:
   Hello:

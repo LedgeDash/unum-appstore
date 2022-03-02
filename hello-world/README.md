@@ -1,15 +1,10 @@
-This hello-world workflow consists of two functions: `hello` and `world`.
-`hello` simply returns the string `"Hello"`; `world` takes the output of `hello`
-and concatenates the string `"world"`.
-
-## Input
+This hello world example consists of two functions: `Hello` and `World`.
+`Hello` simply returns the string "Hello", and `World` takes the output of `Hello`
+and concatenates the string "world".
 
 This workflow doesn't require any input data.
 
-Alternatively, you can specify a SQS queue and the `world` will write its final
-outputs to the SQS queue. See `step-functions/events/sqs.json` and 
-`unum/events/sqs.json` for examples.
+Alternatively, you can specify a SQS queue and the `World` function will write its final
+output to the SQS queue. See `events/sqs.json` for an example.
 
-## Output
-
-Optionally, the `world` function writes to a SQS queue.
+`events` directory contains example inputs to the application.
