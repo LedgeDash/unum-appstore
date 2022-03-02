@@ -1,8 +1,12 @@
 Globals:
   ApplicationName: unum-hello-world
+  WorkflowType: step-functions
+  WorkflowDefinition: unum-step-functions.json
+  FaaSPlatform: aws
   UnumIntermediaryDataStoreType: dynamodb
   UnumIntermediaryDataStoreName: unum-intermediate-datastore
   Checkpoint: true
+  Debug: false
 Functions:
   Hello:
     Properties:
