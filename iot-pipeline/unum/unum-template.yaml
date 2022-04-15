@@ -3,6 +3,8 @@ Globals:
   UnumIntermediaryDataStoreType: s3
   UnumIntermediaryDataStoreName: unum-return-value-store
   Checkpoint: true
+  WorkflowDefinition: unum-step-functions.json
+  WorkflowType: step-functions
 
 Functions:
   Aggregator:

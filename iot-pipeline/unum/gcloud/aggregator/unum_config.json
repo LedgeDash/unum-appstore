@@ -1,0 +1,9 @@
+{
+    "Name": "Aggregator",
+    "Next": {
+        "Name": "HvacController",
+        "InputType": "Scalar"
+    },
+    "Checkpoint": true,
+    "Start": true
+}
