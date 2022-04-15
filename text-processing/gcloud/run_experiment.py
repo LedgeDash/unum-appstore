@@ -9,7 +9,7 @@ APP_NAME='Text Processing'
 ENTRY_FUNCTION_TOPIC = 'text-processing-unum-parallel-0'
 FUNCTION_NAMES = ['text-processing-unum-parallel-0', 'text-processing-user-mention', 'text-processing-shorten-url', 'text-processing-create-post', 'text-processing-publish', 'text-processing-find-url' ]
 NUM_ITERATIONS = 20
-WAIT_FOR_LOG = 20 # seconds
+WAIT_FOR_LOG = 60 # seconds
 
 
 
@@ -27,7 +27,7 @@ def invoke(topic, data):
 
 def get_gcloud_function_log(function_name, start_time):
 
-    ret = subprocess.run(['gcloud', 'functions', 'logs', 'read', function_name, f'--start-time={start_time.isoformat()}', f'--limit=500'], capture_output=True)
+    ret = subprocess.run(['gcloud', 'functions', 'logs', 'read', function_name, f'--start-time={start_time.isoformat()}', f'--limit=10000'], capture_output=True)
     # ret = subprocess.run(['gcloud', 'functions', 'logs', 'read', function_name])
 
     print
@@ -46,12 +46,12 @@ def main():
 
     experiment_start_datetime = datetime.now(timezone.utc)
 
-    print(f'Starting experiment with {APP_NAME} at {experiment_start_datetime}')
+    print(f'Starting experiment with {APP_NAME} at {experiment_start_datetime.isoformat()}')
 
     for i in range(NUM_ITERATIONS):
         print(f'iteration #{i+1}', end='\r')
         invoke(ENTRY_FUNCTION_TOPIC, input_data)
-        time.sleep(1)
+        time.sleep(2)
 
     print(f'Waiting {WAIT_FOR_LOG} seconds for logs to populate')
     time.sleep(WAIT_FOR_LOG)
