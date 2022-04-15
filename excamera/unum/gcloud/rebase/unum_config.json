@@ -1,0 +1,18 @@
+{
+    "Name": "Rebase",
+    "Next": {
+        "Name": "Rebase",
+        "InputType": {
+            "Fan-in": {
+                "Values": [
+                    "Rebase-unumIndex-$0",
+                    "Reencode-unumIndex-($0+1)"
+                ]
+            }
+        },
+        "Conditional": "$0 < $size-1"
+    },
+    "Next Payload Modifiers": ["$0=$0+1"],
+    "Checkpoint": true,
+    "Debug": false
+}

@@ -1,0 +1,4 @@
+google-cloud-firestore
+cfn-flip
+google-cloud-pubsub
+boto3

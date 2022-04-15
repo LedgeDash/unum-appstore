@@ -1,0 +1,36 @@
+{
+    "Name": "Vpxenc",
+    "Next": [
+        {
+            "Name": "Xcdec",
+            "InputType": "Scalar",
+            "Conditional": "$0 < $size-1"
+        },
+        {
+            "Name": "Reencode",
+            "InputType": {
+                "Fan-in": {
+                    "Values": [
+                        "Vpxenc-unumIndex-$0",
+                        "Xcdec-unumIndex-($0-1)" 
+                    ]
+                }
+            },
+            "Conditional": "$0 > 1"
+        },
+        {
+            "Name": "Rebase",
+            "InputType": {
+                "Fan-in": {
+                    "Values": [
+                        "Vpxenc-unumIndex-$0",
+                        "Xcdec-unumIndex-($0-1)" 
+                    ]
+                }
+            },
+            "Conditional": "$0 == 1"
+        }
+    ],
+    "Checkpoint": true,
+    "Debug": false
+}

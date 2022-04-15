@@ -1,0 +1,16 @@
+{
+    "Name": "Reencode",
+    "Next": {
+        "Name": "Rebase",
+        "InputType": {
+            "Fan-in": {
+                "Values": [
+                    "Rebase-unumIndex-($0-1)",
+                    "Reencode-unumIndex-$0"
+                ]
+            }
+        }
+    },
+    "Checkpoint": true,
+    "Debug": false
+}

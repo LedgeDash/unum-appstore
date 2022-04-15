@@ -27,10 +27,7 @@ def invoke(topic, data):
 
 def get_gcloud_function_log(function_name, start_time):
 
-    ret = subprocess.run(['gcloud', 'functions', 'logs', 'read', function_name, f'--start-time={start_time.isoformat()}', f'--limit=100000'], capture_output=True)
-    # ret = subprocess.run(['gcloud', 'functions', 'logs', 'read', function_name])
-
-    print
+    ret = subprocess.run(['gcloud', 'functions', 'logs', 'read', function_name, f'--start-time={start_time.isoformat()}', f'--limit=1000'], capture_output=True)
 
     if ret.returncode != 0:
         print(f'{ret.stderr.decode("utf-8")}')
