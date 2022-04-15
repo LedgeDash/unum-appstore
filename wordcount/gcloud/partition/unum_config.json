@@ -1,0 +1,9 @@
+{
+    "Name": "Partition",
+    "Next": {
+        "Name": "Reducer",
+        "InputType": "Map"
+    },
+    "Checkpoint": true,
+    "Debug": false
+}

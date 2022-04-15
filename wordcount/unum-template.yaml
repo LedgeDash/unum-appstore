@@ -1,9 +1,10 @@
 Globals:
-  ApplicationName: unum-mapreduce-wordcount
-  UnumIntermediaryDataStoreType: s3
-  UnumIntermediaryDataStoreName: unum-return-value-store
+  ApplicationName: unum-mapreduce-wordcount-dynamo-new
+  UnumIntermediaryDataStoreType: dynamodb
+  UnumIntermediaryDataStoreName: unum-dynamo-test-table
+  FaaSPlatform: aws
   Checkpoint: true
-
+  Debug: false
 Functions:
   Mapper:
     Properties:
@@ -17,11 +18,12 @@ Functions:
     Properties:
       CodeUri: partition/
       Runtime: python3.8
-  UnumMap:
-    Properties:
-      CodeUri: unum_map/
-      Runtime: python3.8
   Summary:
     Properties:
       CodeUri: summary/
       Runtime: python3.8
+  UnumMap0:
+    Properties:
+      CodeUri: UnumMap0/
+      Runtime: python3.8
+      Start: true

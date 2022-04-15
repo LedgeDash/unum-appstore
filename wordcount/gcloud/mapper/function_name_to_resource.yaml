@@ -1,0 +1,5 @@
+UnumMap0: projects/tokyo-hall-346516/topics/wordcount-unum-map-0
+Mapper: projects/tokyo-hall-346516/topics/wordcount-mapper
+Reducer: projects/tokyo-hall-346516/topics/wordcount-reducer
+Partition: projects/tokyo-hall-346516/topics/wordcount-partition
+Summary: projects/tokyo-hall-346516/topics/wordcount-summary

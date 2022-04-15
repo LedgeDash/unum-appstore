@@ -1,0 +1,28 @@
+{
+    "Data": {
+        "Source": "http",
+        "Value": [
+            {
+                "pointer": {
+                    "bucket": "wordcount-gameofthrone",
+                    "key": "chunk0.txt"
+                },
+                "destination": "mapreduce-wordcount-unum-262-1"
+            },
+            {
+                "pointer": {
+                    "bucket": "wordcount-gameofthrone",
+                    "key": "chunk1.txt"
+                },
+                "destination": "mapreduce-wordcount-unum-262-1"
+            },
+            {
+                "pointer": {
+                    "bucket": "wordcount-gameofthrone",
+                    "key": "chunk2.txt"
+                },
+                "destination": "mapreduce-wordcount-unum-262-1"
+            }
+        ]
+    }
+}
