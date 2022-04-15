@@ -1,0 +1,8 @@
+{
+    "Name": "CreatePost",
+    "Next": {
+        "Name": "Publish",
+        "InputType": "Scalar"
+    },
+    "Checkpoint": true
+}

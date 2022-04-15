@@ -1,0 +1,16 @@
+{
+    "Name": "UnumParallel0",
+    "Next": [
+        {
+            "Name": "UserMention",
+            "InputType": "Scalar"
+        },
+        {
+            "Name": "FindUrl",
+            "InputType": "Scalar"
+        }
+    ],
+    "Checkpoint": true,
+    "Start": true,
+    "Remove": false
+}
